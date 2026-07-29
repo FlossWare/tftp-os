@@ -1,0 +1,101 @@
+#cloud-config
+# PxeOS generated Cloud-Init autoinstall for Ubuntu {{ profile.os_version }}
+# Profile: {{ profile.name }}
+
+autoinstall:
+  version: {{ autoinstall_version }}
+
+  locale: {{ locale }}
+  keyboard:
+    layout: {{ keyboard_layout }}
+  timezone: {{ timezone }}
+
+  identity:
+    hostname: {{ hostname }}
+    username: {{ username }}
+{% if profile.extra.get('password_hash') %}
+    password: "{{ profile.extra['password_hash'] }}"
+{% else %}
+    password: "!"
+{% endif %}
+
+{% if profile.extra.get('realname') %}
+    realname: {{ profile.extra['realname'] }}
+{% endif %}
+
+  ssh:
+    install-server: true
+    allow-pw: {{ profile.extra.get('allow_password_ssh', true) | lower }}
+{% if ssh_authorized_keys %}
+    authorized-keys:
+{% for key in ssh_authorized_keys %}
+      - "{{ key }}"
+{% endfor %}
+{% endif %}
+
+{% if network_config.get('bootproto') == 'static' %}
+  network:
+    version: 2
+    ethernets:
+      {{ network_config.get('device', 'ens3') }}:
+        dhcp4: false
+        addresses:
+          - {{ network_config.get('ip', '192.168.1.100') }}/{{ network_config.get('prefix', '24') }}
+        gateway4: {{ network_config.get('gateway', '192.168.1.1') }}
+        nameservers:
+          addresses:
+{% for ns in network_config.get('nameservers', ['8.8.8.8']) %}
+            - {{ ns }}
+{% endfor %}
+{% endif %}
+
+  storage:
+{% if disk_method == "direct" %}
+    layout:
+      name: direct
+{% elif disk_method == "lvm" %}
+    layout:
+      name: lvm
+{% if disk_device %}
+      match:
+        path: {{ disk_device }}
+{% endif %}
+{% elif disk_layout %}
+    config:
+{% for item in disk_layout.get('config', []) %}
+      - {{ item | tojson }}
+{% endfor %}
+{% else %}
+    layout:
+      name: lvm
+{% endif %}
+
+{% if packages %}
+  packages:
+{% for pkg in packages %}
+    - {{ pkg }}
+{% endfor %}
+{% endif %}
+
+{% if profile.extra.get('snaps') %}
+  snaps:
+{% for snap in profile.extra['snaps'] %}
+    - name: {{ snap.get('name', snap) }}
+{% if snap is mapping and snap.get('channel') %}
+      channel: {{ snap['channel'] }}
+{% endif %}
+{% if snap is mapping and snap.get('classic') %}
+      classic: true
+{% endif %}
+{% endfor %}
+{% endif %}
+
+  updates: security
+  shutdown: reboot
+
+{% if post_scripts %}
+  late-commands:
+{% for script in post_scripts %}
+    - curtin in-target --target=/target -- sh -c '{{ script | replace("'", "'\\''") }}'
+{% endfor %}
+{% endif %}

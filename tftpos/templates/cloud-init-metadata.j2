@@ -1,0 +1,7 @@
+instance-id: {{ instance_id }}
+local-hostname: {{ hostname }}
+{% if extra_meta %}
+{% for key, value in extra_meta.items() %}
+{{ key }}: {{ value }}
+{% endfor %}
+{% endif %}

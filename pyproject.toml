@@ -1,0 +1,143 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tftpos"
+version = "1.0"
+description = "TFTP-based firmware provisioning system"
+readme = "README.md"
+license = {text = "GPL-3.0-or-later"}
+authors = [
+    {name = "FlossWare", email = "scot.floess@gmail.com"}
+]
+maintainers = [
+    {name = "FlossWare", email = "scot.floess@gmail.com"}
+]
+keywords = [
+    "tftp", "provisioning", "firmware", "network-boot",
+    "openwrt", "ddwrt", "freshtomato",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: POSIX :: BSD",
+    "Operating System :: POSIX :: BSD :: FreeBSD",
+    "Operating System :: POSIX :: BSD :: NetBSD",
+    "Operating System :: POSIX :: BSD :: OpenBSD",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Systems Administration",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "jinja2>=3.1.0,<4.0",
+    "pydantic>=2.0.0,<3.0",
+    "sqlalchemy>=2.0.0,<3.0",
+    "tomli>=2.0.0,<3.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+api = [
+    "fastapi>=0.100.0,<1.0",
+    "uvicorn>=0.22.0,<1.0",
+    "python-multipart>=0.0.6,<1.0",
+]
+tls = ["cryptography>=41.0,<51.0"]
+postgres = ["psycopg2-binary>=2.9,<3.0"]
+mysql = ["pymysql>=1.0,<2.0"]
+dev = [
+    "pytest>=7.0.0,<9.0",
+    "pytest-cov>=4.0.0,<6.0",
+    "pytest-xdist>=3.0.0,<4.0",
+    "pytest-timeout>=2.1.0,<3.0",
+    "pytest-mock>=3.10.0,<4.0",
+    "coverage[toml]>=7.0.0,<8.0",
+    "ruff>=0.1.0,<1.0",
+    "mypy>=1.0.0,<2.0",
+    "bandit>=1.7.5,<2.0",
+]
+
+[project.scripts]
+tftpos = "tftpos.cli:main"
+
+[project.entry-points."tftpos.plugins"]
+
+[project.urls]
+Homepage = "https://github.com/FlossWare/TftpOS"
+Repository = "https://github.com/FlossWare/TftpOS"
+"Bug Tracker" = "https://github.com/FlossWare/TftpOS/issues"
+
+[tool.setuptools]
+packages = ["tftpos", "tftpos.plugins", "tftpos.client"]
+
+[tool.setuptools.package-data]
+tftpos = ["py.typed", "templates/*.j2"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+exclude = [
+    ".git", ".mypy_cache", ".pytest_cache", ".ruff_cache",
+    ".venv", "venv", "__pycache__", "build", "dist", "htmlcov",
+]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "SIM", "PL", "RUF"]
+ignore = [
+    "E501", "PLR0913", "PLR2004", "PLC0415", "E402",
+    "RUF002", "B904", "SIM108", "PLR0912", "PLR0915", "RUF012",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["PLR2004", "S101"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+show_error_codes = true
+pretty = true
+
+[tool.coverage.run]
+source = ["tftpos"]
+omit = ["*/tests/*", "*/test_*", "*/__pycache__/*"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 75
+precision = 2
+show_missing = true
+skip_empty = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=tftpos",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-branch",
+    "--maxfail=3",
+]
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests",
+]
+timeout = 300

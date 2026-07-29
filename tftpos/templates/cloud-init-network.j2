@@ -1,0 +1,33 @@
+version: 2
+ethernets:
+  {{ interface }}:
+{% if method == "dhcp" %}
+    dhcp4: true
+{% else %}
+    dhcp4: false
+{% if address %}
+    addresses:
+      - {{ address }}
+{% endif %}
+{% if gateway %}
+    routes:
+      - to: default
+        via: {{ gateway }}
+{% endif %}
+{% if nameservers %}
+    nameservers:
+      addresses:
+{% for ns in nameservers %}
+        - {{ ns }}
+{% endfor %}
+{% if search_domains %}
+      search:
+{% for domain in search_domains %}
+        - {{ domain }}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% if mtu %}
+    mtu: {{ mtu }}
+{% endif %}
+{% endif %}

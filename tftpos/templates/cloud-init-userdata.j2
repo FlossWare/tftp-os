@@ -1,0 +1,96 @@
+#cloud-config
+
+hostname: {{ hostname }}
+fqdn: {{ fqdn }}
+manage_etc_hosts: {{ manage_etc_hosts | lower }}
+
+{% if timezone %}
+timezone: {{ timezone }}
+{% endif %}
+{% if locale %}
+locale: {{ locale }}
+{% endif %}
+
+ssh_pwauth: {{ ssh_pwauth | lower }}
+disable_root: {{ disable_root | lower }}
+
+{% if users %}
+users:
+{% for user in users %}
+  - name: {{ user.name }}
+{% if user.get('groups') %}
+    groups: {{ user.groups | join(', ') if user.groups is iterable and user.groups is not string else user.groups }}
+{% endif %}
+{% if user.get('shell') %}
+    shell: {{ user.shell }}
+{% endif %}
+{% if user.get('sudo') %}
+    sudo: {{ user.sudo }}
+{% endif %}
+{% if user.get('lock_passwd') is not none %}
+    lock_passwd: {{ user.lock_passwd | lower }}
+{% endif %}
+{% if user.get('passwd') %}
+    passwd: {{ user.passwd }}
+{% endif %}
+{% if user.get('ssh_authorized_keys') %}
+    ssh_authorized_keys:
+{% for key in user.ssh_authorized_keys %}
+      - {{ key }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if packages %}
+packages:
+{% for pkg in packages %}
+  - {{ pkg }}
+{% endfor %}
+{% endif %}
+
+{% if write_files %}
+write_files:
+{% for wf in write_files %}
+  - path: {{ wf.path }}
+{% if wf.get('content') %}
+    content: |
+{% for line in wf.content.split('\n') %}
+      {{ line }}
+{% endfor %}
+{% endif %}
+{% if wf.get('permissions') %}
+    permissions: '{{ wf.permissions }}'
+{% endif %}
+{% if wf.get('owner') %}
+    owner: {{ wf.owner }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if post_scripts %}
+runcmd:
+{% for cmd in post_scripts %}
+  - {{ cmd }}
+{% endfor %}
+{% endif %}
+
+{% if extra_config %}
+{% for key, value in extra_config.items() %}
+{% if value is iterable and value is not string and value is not mapping %}
+{{ key }}:
+{% for item in value %}
+  - {{ item }}
+{% endfor %}
+{% elif value is mapping %}
+{{ key }}:
+{% for k, v in value.items() %}
+  {{ k }}: {{ v }}
+{% endfor %}
+{% else %}
+{{ key }}: {{ value }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+final_message: "{{ final_message }}"
