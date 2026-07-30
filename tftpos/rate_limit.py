@@ -14,12 +14,18 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Optional, Tuple
 
-from fastapi import Request, Response
-from starlette.middleware.base import (
-    BaseHTTPMiddleware,
-    RequestResponseEndpoint,
-)
-from starlette.responses import JSONResponse
+try:
+    from fastapi import Request, Response
+    from starlette.middleware.base import (
+        BaseHTTPMiddleware,
+        RequestResponseEndpoint,
+    )
+    from starlette.responses import JSONResponse
+except ImportError:
+    Request = Response = None
+    BaseHTTPMiddleware = object
+    RequestResponseEndpoint = None
+    JSONResponse = None
 
 logger = logging.getLogger("tftpos.rate_limit")
 

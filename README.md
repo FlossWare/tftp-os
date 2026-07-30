@@ -1,14 +1,16 @@
-# TftpOS
+# tftp-os
 
-TFTP-based firmware provisioning system.
+TFTP-based firmware provisioning library — reusable base for network boot applications.
 
 ## Overview
 
-TftpOS is a standalone firmware provisioning framework. Given a device's MAC address (or hostname, subnet, serial number, or group), TftpOS resolves which firmware file to serve, tracks provisioning state, and provides supporting infrastructure: cloud-init config generation, cloud image management, BMC power control, console access, hypervisor backends, audit logging, webhooks, and RBAC.
+tftp-os is a standalone firmware provisioning library. Given a device's MAC address (or hostname, subnet, serial number, or group), tftp-os resolves which firmware file to serve, tracks provisioning state, and provides supporting infrastructure: cloud-init config generation, cloud image management, BMC power control, console access, hypervisor backends, audit logging, webhooks, and RBAC.
 
-TftpOS works on its own for scenarios where you need to serve firmware to devices -- router firmware (OpenWRT, DD-WRT, FreshTomato), embedded systems, IoT devices, or any TFTP-based provisioning workflow.
+tftp-os is a **reusable library** — it contains no CLI, no REST API routes, and no UI. It is designed as a foundation that anyone can build on. See [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos) for a reference application with desktop, mobile, and web frontends.
 
-[PxeOS](https://github.com/FlossWare/PxeOS) builds on TftpOS as a decorator layer, adding iPXE script generation, autoinstall templates (kickstart, preseed, autoinstall, autoyast), OS installer plugins, DHCP configuration, and a web UI. If you need full PXE boot provisioning for operating systems, use PxeOS. If you need a firmware serving foundation, use TftpOS directly.
+tftp-os works on its own for scenarios where you need to serve firmware to devices -- router firmware (OpenWRT, DD-WRT, FreshTomato), embedded systems, IoT devices, or any TFTP-based provisioning workflow.
+
+[pxe-os](https://github.com/FlossWare/pxe-os) builds on tftp-os as a decorator layer, adding iPXE script generation, autoinstall templates (kickstart, preseed, autoinstall, autoyast), OS installer plugins, DHCP configuration, and a web UI. If you need full PXE boot provisioning for operating systems, use pxe-os. If you need a firmware serving foundation, use tftp-os directly.
 
 ## Project Status
 
@@ -16,7 +18,7 @@ TftpOS works on its own for scenarios where you need to serve firmware to device
 - **Python 3.10 -- 3.13**
 - **Development Status: Alpha** (Development Status :: 3 - Alpha)
 
-> **TftpOS is alpha software.** It has been extracted from PxeOS and has not been deployed in a production environment. The test suite validates logic correctness, but no real-world TFTP serving has been performed. See [Known Limitations](#known-limitations) for details.
+> **tftp-os is alpha software.** It has been extracted from PxeOS and has not been deployed in a production environment. The test suite validates logic correctness, but no real-world TFTP serving has been performed. See [Known Limitations](#known-limitations) for details.
 
 ## Quick Start
 
@@ -135,7 +137,7 @@ firmware_path = engine.serve(mac="aa:bb:cc:dd:ee:ff")
 
 ## Configuration
 
-TftpOS uses TOML configuration files. There are three types:
+tftp-os uses TOML configuration files. There are three types:
 
 ### Server config (`tftpos.toml`)
 
@@ -288,7 +290,7 @@ Hostname patterns use `fnmatch` glob syntax. Subnet matching uses standard CIDR 
 
 ## Plugin Architecture
 
-TftpOS uses a plugin system for firmware handling. Each plugin implements the `FirmwarePlugin` abstract base class:
+tftp-os uses a plugin system for firmware handling. Each plugin implements the `FirmwarePlugin` abstract base class:
 
 ```python
 from tftpos.plugins.base import FirmwarePlugin
@@ -343,7 +345,7 @@ See [docs/PLUGIN_GUIDE.md](docs/PLUGIN_GUIDE.md) for a complete tutorial.
 
 ## Provisioning State Machine
 
-TftpOS tracks each device through a provisioning lifecycle:
+tftp-os tracks each device through a provisioning lifecycle:
 
 ```
 REGISTERED ──> BOOTING ──> INSTALLING ──> POST_INSTALL ──> COMPLETE
@@ -377,7 +379,7 @@ tracker.on_state_change(ProvisionState.COMPLETE, lambda record: print(f"Done: {r
 
 ## Storage Backends
 
-TftpOS supports multiple storage backends for provisioning state:
+tftp-os supports multiple storage backends for provisioning state:
 
 | Backend | Config `url` | Use case |
 |---------|-------------|----------|
@@ -560,7 +562,7 @@ console_endpoint = "192.168.1.100:5900"
 
 ## Hypervisor Backends
 
-TftpOS can create and manage VMs on four hypervisor platforms:
+tftp-os can create and manage VMs on four hypervisor platforms:
 
 | Backend | Platform | CLI tools |
 |---------|----------|-----------|
@@ -862,12 +864,12 @@ registry.register("myrouter", DistroAlias("openwrt", "openwrt", "23.05"))
 
 ## Relationship to PxeOS
 
-TftpOS is the **foundation layer**. PxeOS is the **decorator layer**.
+tftp-os is the **foundation layer**. PxeOS is the **decorator layer**.
 
-| Concern | TftpOS | PxeOS |
+| Concern | tftp-os | PxeOS |
 |---------|--------|-------|
-| Host matching | MAC, hostname, subnet, serial, group, arch | Same (delegates to TftpOS) |
-| Profile loading | TOML-based profiles | Same (delegates to TftpOS) |
+| Host matching | MAC, hostname, subnet, serial, group, arch | Same (delegates to tftp-os) |
+| Profile loading | TOML-based profiles | Same (delegates to tftp-os) |
 | Firmware serving | Generic firmware path | iPXE scripts, kernel + initrd + boot args |
 | Autoinstall | Cloud-init only | Kickstart, preseed, autoinstall, autoyast |
 | OS plugins | `FirmwarePlugin` (firmware path) | `OSPlugin` extends FirmwarePlugin (boot assets, autoinstall, ISO extraction) |
@@ -876,25 +878,24 @@ TftpOS is the **foundation layer**. PxeOS is the **decorator layer**.
 | Web UI | None | Dashboard with live status |
 | CLI | `tftpos` | `pxeos` |
 
-**Dependency direction:** PxeOS depends on TftpOS. TftpOS never imports from PxeOS.
+**Dependency direction:** PxeOS depends on tftp-os. tftp-os never imports from PxeOS.
 
 ```python
-# PxeOS engine wraps TftpOS engine (has-a, not is-a)
+# PxeOS engine wraps tftp-os engine (has-a, not is-a)
 from tftpos.engine import FirmwareEngine
 from pxeos.engine import ProvisioningEngine
 
 engine = ProvisioningEngine(registry, matcher, config)
 # engine._firmware is a FirmwareEngine instance
 # engine.render_ipxe_script() -- PXE-specific
-# engine._firmware.serve()    -- TftpOS firmware resolution
+# engine._firmware.serve()    -- tftp-os firmware resolution
 ```
 
 ## Known Limitations
 
-- **No real-world deployment** -- TftpOS has not been used to serve firmware to actual devices
-- **No CLI implementation** -- `tftpos` entry point is declared but `tftpos/cli.py` does not exist yet
+- **No real-world deployment** -- tftp-os has not been used to serve firmware to actual devices
 - **No REST API implementation** -- FastAPI is an optional dependency; no API routes are defined
-- **Plugin ecosystem** -- No built-in firmware plugins ship with TftpOS; you must write your own or use PxeOS's OS plugins
+- **Plugin ecosystem** -- No built-in firmware plugins ship with tftp-os; you must write your own or use PxeOS's OS plugins
 - **IPMI/Redfish** -- Power control shells out to `ipmitool` and makes HTTP requests to Redfish endpoints; not tested against real BMCs
 - **Hypervisor backends** -- Shell out to platform-specific CLI tools; tested with mocks only
 - **Cloud image import** -- Requires `qemu-img` and `wget`/`curl` on the host
@@ -928,8 +929,8 @@ pip install tftpos[dev]       # pytest, ruff, mypy, bandit, coverage
 ## Development
 
 ```bash
-git clone https://github.com/FlossWare/TftpOS.git
-cd TftpOS
+git clone https://github.com/FlossWare/tftp-os.git
+cd tftp-os
 pip install -e ".[dev]"
 pytest
 ```

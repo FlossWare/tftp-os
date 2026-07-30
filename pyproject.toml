@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tftpos"
 version = "1.0"
-description = "TFTP-based firmware provisioning system"
+description = "TFTP-based firmware provisioning library — reusable base for network boot applications"
 readme = "README.md"
 license = {text = "GPL-3.0-or-later"}
 authors = [
@@ -64,15 +64,12 @@ dev = [
     "bandit>=1.7.5,<2.0",
 ]
 
-[project.scripts]
-tftpos = "tftpos.cli:main"
-
 [project.entry-points."tftpos.plugins"]
 
 [project.urls]
-Homepage = "https://github.com/FlossWare/TftpOS"
-Repository = "https://github.com/FlossWare/TftpOS"
-"Bug Tracker" = "https://github.com/FlossWare/TftpOS/issues"
+Homepage = "https://github.com/FlossWare/tftp-os"
+Repository = "https://github.com/FlossWare/tftp-os"
+"Bug Tracker" = "https://github.com/FlossWare/tftp-os/issues"
 
 [tool.setuptools]
 packages = ["tftpos", "tftpos.plugins", "tftpos.client"]

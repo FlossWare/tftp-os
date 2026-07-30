@@ -14,11 +14,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, HTTPException, Request
-from fastapi.security import (
-    HTTPAuthorizationCredentials,
-    HTTPBearer,
-)
+try:
+    from fastapi import Depends, HTTPException, Request
+    from fastapi.security import (
+        HTTPAuthorizationCredentials,
+        HTTPBearer,
+    )
+except ImportError:
+    Depends = HTTPException = Request = None
+    HTTPAuthorizationCredentials = HTTPBearer = None
 
 logger = logging.getLogger("tftpos.auth")
 
@@ -157,7 +161,7 @@ class ApiKeyStore:
 _auth_enabled: bool = False
 _key_store: Optional[ApiKeyStore] = None
 
-_bearer_scheme = HTTPBearer(auto_error=False)
+_bearer_scheme = HTTPBearer(auto_error=False) if HTTPBearer is not None else None
 
 
 def init_auth(
