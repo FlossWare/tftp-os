@@ -80,6 +80,7 @@ dev = [
 # Plugin namespace: intentionally empty. Third-party packages register plugins
 # here via their own pyproject.toml entry-points.
 [project.entry-points."tftpos.plugins"]
+static = "tftpos.plugins.static:StaticFirmwarePlugin"
 
 [project.urls]
 Homepage = "https://github.com/FlossWare/tftp-os"
