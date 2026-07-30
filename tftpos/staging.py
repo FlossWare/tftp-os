@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Optional, Union
 
@@ -15,23 +16,24 @@ def _safe_name(name: str) -> str:
     """Validate a filename to prevent path traversal.
 
     Rejects names that contain directory separators, ``..``
-    components, or are empty / dot-only.  Raises ``ValueError``
-    for unsafe input.
+    as a path component, or are empty / dot-only.
+    Raises ``ValueError`` for unsafe input.
     """
-    # Reject names with directory separators or traversal
-    if "/" in name or os.sep in name:
+    # Reject names with directory separators
+    if "/" in name or (os.sep != "/" and os.sep in name):
         raise ValueError(
             f"unsafe staged filename: {name!r}"
         )
-    if ".." in name:
+    # Reject empty or dot-only names
+    if not name or name == "." or name == "..":
         raise ValueError(
             f"unsafe staged filename: {name!r}"
         )
-    if not name or name in (".", ".."):
+    # Reject null bytes
+    if "\x00" in name:
         raise ValueError(
             f"unsafe staged filename: {name!r}"
         )
-
     return name
 
 
@@ -44,9 +46,6 @@ def _validate_under_root(
     symlinks on the leaf) to prevent path traversal.
     Raises ``ValueError`` if the path escapes *root*.
     """
-    # Resolve the parent to handle any ".." in the root
-    # path itself, but do not follow the leaf (which may
-    # be an existing symlink pointing elsewhere).
     parent_resolved = path.parent.resolve()
     root_resolved = root.resolve()
     try:
@@ -76,7 +75,8 @@ def stage(
     Parameters
     ----------
     firmware_path:
-        Absolute or relative path to the firmware file.  Must exist.
+        Absolute or relative path to the firmware file.  Must
+        exist and must be a regular file (not a directory).
     tftp_root:
         Directory that the external TFTP daemon serves from
         (e.g. ``/srv/tftp``).  Created if it does not exist.
@@ -97,9 +97,11 @@ def stage(
     ------
     FileNotFoundError
         If *firmware_path* does not exist.
+    IsADirectoryError
+        If *firmware_path* is a directory rather than a file.
     ValueError
         If the resolved target would escape *tftp_root*
-        (path traversal).
+        (path traversal) or the name is unsafe.
     """
     firmware_path = Path(firmware_path)
     tftp_root = Path(tftp_root)
@@ -107,6 +109,11 @@ def stage(
     if not firmware_path.exists():
         raise FileNotFoundError(
             f"firmware file not found: {firmware_path}"
+        )
+
+    if firmware_path.is_dir():
+        raise IsADirectoryError(
+            f"firmware path is a directory: {firmware_path}"
         )
 
     # Determine the filename inside tftp_root
@@ -123,15 +130,20 @@ def stage(
     # Validate that the target stays under tftp_root
     _validate_under_root(target, tftp_root)
 
-    # Remove any existing file/symlink at the target
-    if target.exists() or target.is_symlink():
-        target.unlink()
-
+    # Use atomic tmp-then-rename to avoid TOCTOU races.
+    # Create the temp entry in tftp_root so rename is
+    # guaranteed to be on the same filesystem.
     if symlink:
         try:
-            os.symlink(
-                os.path.abspath(firmware_path), target
+            tmp_fd, tmp_name = tempfile.mkstemp(
+                dir=tftp_root, prefix=".stage-"
             )
+            os.close(tmp_fd)
+            os.unlink(tmp_name)  # need the name free for symlink
+            os.symlink(
+                os.path.abspath(firmware_path), tmp_name
+            )
+            os.replace(tmp_name, target)
             logger.info(
                 "staged symlink %s -> %s",
                 target,
@@ -140,13 +152,38 @@ def stage(
         except OSError:
             # Cross-filesystem or permission issue -- fall back
             # to a copy
-            shutil.copy2(firmware_path, target)
+            tmp_fd, tmp_name = tempfile.mkstemp(
+                dir=tftp_root, prefix=".stage-"
+            )
+            os.close(tmp_fd)
+            try:
+                shutil.copy2(firmware_path, tmp_name)
+                os.replace(tmp_name, target)
+            except BaseException:
+                # Clean up tmp file on failure
+                try:
+                    os.unlink(tmp_name)
+                except OSError:
+                    pass
+                raise
             logger.info(
                 "staged copy %s (symlink failed)",
                 target,
             )
     else:
-        shutil.copy2(firmware_path, target)
+        tmp_fd, tmp_name = tempfile.mkstemp(
+            dir=tftp_root, prefix=".stage-"
+        )
+        os.close(tmp_fd)
+        try:
+            shutil.copy2(firmware_path, tmp_name)
+            os.replace(tmp_name, target)
+        except BaseException:
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
+            raise
         logger.info("staged copy %s", target)
 
     return target
@@ -155,10 +192,13 @@ def stage(
 def unstage(staged_path: Union[str, Path]) -> bool:
     """Remove a previously staged file or symlink.
 
-    Returns ``True`` if the file was removed, ``False`` if it
-    was not found.
+    Only removes regular files and symlinks.  Returns ``True``
+    if the entry was removed, ``False`` if it was not found.
+    Refuses to remove directories.
     """
     staged_path = Path(staged_path)
+    if staged_path.is_dir() and not staged_path.is_symlink():
+        return False
     if staged_path.exists() or staged_path.is_symlink():
         staged_path.unlink()
         logger.info("unstaged %s", staged_path)

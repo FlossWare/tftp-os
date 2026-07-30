@@ -149,9 +149,24 @@ class TestStagePathTraversal:
         with pytest.raises(ValueError, match="unsafe"):
             stage(fw, tftp, name="subdir/firmware.bin")
 
+    def test_rejects_null_byte_in_name(self, tmp_path):
+        fw = _create_firmware(tmp_path)
+        tftp = tmp_path / "tftp"
+        with pytest.raises(ValueError, match="unsafe"):
+            stage(fw, tftp, name="firmware\x00.bin")
+
+    def test_allows_double_dot_in_extension(self, tmp_path):
+        """Names like 'firmware..bin' are unusual but safe."""
+        fw = _create_firmware(tmp_path)
+        tftp = tmp_path / "tftp"
+        # This should succeed -- double dots in filenames
+        # are not a traversal risk when no separators exist
+        result = stage(fw, tftp, name="firmware..bin")
+        assert result.name == "firmware..bin"
+
 
 # ---------------------------------------------------------------
-# stage() — FileNotFoundError
+# stage() — FileNotFoundError and IsADirectoryError
 # ---------------------------------------------------------------
 
 
@@ -164,6 +179,15 @@ class TestStageMissingFirmware:
             FileNotFoundError, match="firmware file not found"
         ):
             stage(missing, tftp)
+
+    def test_raises_is_a_directory(self, tmp_path):
+        tftp = tmp_path / "tftp"
+        directory = tmp_path / "a_directory"
+        directory.mkdir()
+        with pytest.raises(
+            IsADirectoryError, match="firmware path is a directory"
+        ):
+            stage(directory, tftp)
 
 
 # ---------------------------------------------------------------
@@ -235,6 +259,12 @@ class TestUnstage:
     def test_returns_false_for_missing(self, tmp_path):
         missing = tmp_path / "nonexistent"
         assert unstage(missing) is False
+
+    def test_refuses_to_remove_directory(self, tmp_path):
+        directory = tmp_path / "some_dir"
+        directory.mkdir()
+        assert unstage(directory) is False
+        assert directory.is_dir()
 
     def test_original_firmware_untouched(self, tmp_path):
         fw = _create_firmware(tmp_path)
