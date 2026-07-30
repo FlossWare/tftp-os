@@ -1,7 +1,7 @@
-"""Token-bucket rate limiter for TftpOS API.
+"""Token-bucket rate limiter for tftp-os.
 
 Uses only the standard library -- no external dependencies.
-Provides per-IP rate limiting with configurable limits for
+Provides per-key rate limiting with configurable limits for
 different endpoint groups (TFTP, API, auth).
 """
 
@@ -13,19 +13,6 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Optional, Tuple
-
-try:
-    from fastapi import Request, Response
-    from starlette.middleware.base import (
-        BaseHTTPMiddleware,
-        RequestResponseEndpoint,
-    )
-    from starlette.responses import JSONResponse
-except ImportError:
-    Request = Response = None
-    BaseHTTPMiddleware = object
-    RequestResponseEndpoint = None
-    JSONResponse = None
 
 logger = logging.getLogger("tftpos.rate_limit")
 
@@ -223,75 +210,3 @@ def reset_all_limiters() -> None:
     """Reset every configured limiter (for testing)."""
     for limiter in _limiters.values():
         limiter.reset()
-
-
-def _client_ip(request: Request) -> str:
-    """Extract the client IP from a request.
-
-    Respects X-Forwarded-For when present (first entry).
-    Falls back to the direct client address.
-    """
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    if request.client is not None:
-        return request.client.host
-    return "unknown"
-
-
-# Paths that are exempt from rate limiting.
-_EXEMPT_PATHS = frozenset({"/api/v1/health", "/metrics"})
-
-
-class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Starlette middleware that applies per-IP token-bucket rate limiting."""
-
-    async def dispatch(
-        self,
-        request: Request,
-        call_next: RequestResponseEndpoint,
-    ) -> Response:
-        if not _enabled:
-            return await call_next(request)
-
-        path = request.url.path
-        if path in _EXEMPT_PATHS:
-            return await call_next(request)
-
-        group = classify_endpoint(path)
-        limiter = _limiters.get(group)
-        if limiter is None:
-            return await call_next(request)
-
-        ip = _client_ip(request)
-        key = f"{group.value}:{ip}"
-
-        if not limiter.check(key):
-            retry = limiter.retry_after(key)
-            logger.warning(
-                "Rate limited ip=%s path=%s group=%s "
-                "retry_after=%.1f",
-                ip,
-                path,
-                group.value,
-                retry,
-            )
-            return JSONResponse(
-                status_code=429,
-                content={
-                    "detail": "Too many requests. Please try again later."
-                },
-                headers={
-                    "Retry-After": str(int(retry) + 1),
-                    "X-RateLimit-Remaining": "0",
-                    "X-RateLimit-Reset": str(int(time.time() + retry + 1)),
-                },
-            )
-
-        response = await call_next(request)
-        remaining = limiter.remaining(key)
-        response.headers["X-RateLimit-Remaining"] = str(remaining)
-        response.headers["X-RateLimit-Reset"] = str(
-            int(time.time() + 60)
-        )
-        return response

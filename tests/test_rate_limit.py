@@ -22,8 +22,6 @@ from tftpos.rate_limit import (
     EndpointGroup,
     RateLimitConfig,
     RateLimiter,
-    RateLimitMiddleware,
-    _client_ip,
     classify_endpoint,
     configure_rate_limiting,
     get_limiter,
@@ -260,40 +258,6 @@ class TestGlobalLimiters:
 # =================================================================
 # 5. Client IP extraction
 # =================================================================
-
-
-class TestClientIP:
-
-    def test_from_x_forwarded_for(self):
-        class FakeRequest:
-            headers = {"x-forwarded-for": "1.2.3.4, 5.6.7.8"}
-            client = None
-
-        assert _client_ip(FakeRequest()) == "1.2.3.4"
-
-    def test_from_client(self):
-        class FakeClient:
-            host = "10.0.0.1"
-
-        class FakeRequest:
-            headers = {}
-            client = FakeClient()
-
-        assert _client_ip(FakeRequest()) == "10.0.0.1"
-
-    def test_unknown_when_no_info(self):
-        class FakeRequest:
-            headers = {}
-            client = None
-
-        assert _client_ip(FakeRequest()) == "unknown"
-
-    def test_x_forwarded_for_strips_spaces(self):
-        class FakeRequest:
-            headers = {"x-forwarded-for": "  9.8.7.6 , 1.2.3.4"}
-            client = None
-
-        assert _client_ip(FakeRequest()) == "9.8.7.6"
 
 
 # =================================================================

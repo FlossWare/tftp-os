@@ -14,16 +14,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-try:
-    from fastapi import Depends, HTTPException, Request
-    from fastapi.security import (
-        HTTPAuthorizationCredentials,
-        HTTPBearer,
-    )
-except ImportError:
-    Depends = HTTPException = Request = None
-    HTTPAuthorizationCredentials = HTTPBearer = None
-
 logger = logging.getLogger("tftpos.auth")
 
 _FILE_PERMS = 0o600
@@ -156,89 +146,3 @@ class ApiKeyStore:
         with open(self._keys_path, "w") as fh:
             json.dump(data, fh, indent=2, sort_keys=True)
         os.chmod(str(self._keys_path), _FILE_PERMS)
-
-
-_auth_enabled: bool = False
-_key_store: Optional[ApiKeyStore] = None
-
-_bearer_scheme = HTTPBearer(auto_error=False) if HTTPBearer is not None else None
-
-
-def init_auth(
-    enabled: bool, key_store: ApiKeyStore
-) -> None:
-    global _auth_enabled, _key_store
-    _auth_enabled = enabled
-    _key_store = key_store
-
-
-def get_key_store() -> Optional[ApiKeyStore]:
-    return _key_store
-
-
-def is_auth_enabled() -> bool:
-    return _auth_enabled
-
-
-def require_role(min_role: Role):
-    async def _dependency(
-        credentials: Optional[
-            HTTPAuthorizationCredentials
-        ] = Depends(_bearer_scheme),
-    ) -> Optional[ApiKey]:
-        from tftpos.metrics import auth_attempts_total
-
-        if not _auth_enabled or _key_store is None:
-            return None
-
-        if credentials is None:
-            logger.warning(
-                "Auth failure: no credentials provided "
-                "for role=%s",
-                min_role.value,
-            )
-            auth_attempts_total.inc(result="failure")
-            raise HTTPException(
-                status_code=401,
-                detail="API key required",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        api_key = _key_store.validate(credentials.credentials)
-        if api_key is None:
-            logger.warning(
-                "Auth failure: invalid or disabled key "
-                "for role=%s",
-                min_role.value,
-            )
-            auth_attempts_total.inc(result="failure")
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid or disabled API key",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        if not role_has_access(api_key.role, min_role):
-            logger.warning(
-                "Auth failure: insufficient role "
-                "name=%s role=%s required=%s",
-                api_key.name, api_key.role.value,
-                min_role.value,
-            )
-            auth_attempts_total.inc(result="failure")
-            raise HTTPException(
-                status_code=403,
-                detail=(
-                    f"Requires {min_role.value} role "
-                    f"or higher"
-                ),
-            )
-
-        logger.debug(
-            "Auth success name=%s role=%s",
-            api_key.name, api_key.role.value,
-        )
-        auth_attempts_total.inc(result="success")
-        return api_key
-
-    return _dependency
