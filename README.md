@@ -14,7 +14,7 @@ tftp-os works on its own for scenarios where you need to serve firmware to devic
 
 ## Project Status
 
-- **954 tests**, all passing
+- **950 tests**, all passing
 - **Python 3.10 -- 3.13**
 - **Development Status: Alpha** (Development Status :: 3 - Alpha)
 
@@ -887,7 +887,6 @@ tftp-os is the **foundation layer**. PxeOS is the **decorator layer**.
 | Plugin registry | Entry point: `tftpos.plugins` | Entry point: `pxeos.plugins` |
 | DHCP | Not managed | Generates dnsmasq/ISC DHCP config |
 | Web UI | None | Dashboard with live status |
-| CLI | `tftpos` | `pxeos` |
 
 **Dependency direction:** PxeOS depends on tftp-os. tftp-os never imports from PxeOS.
 
@@ -930,7 +929,6 @@ engine = ProvisioningEngine(registry, matcher, config)
 ### Optional dependency groups
 
 ```bash
-pip install tftpos[api]       # FastAPI + uvicorn
 pip install tftpos[tls]       # cryptography (TLS cert generation)
 pip install tftpos[postgres]  # psycopg2 (PostgreSQL)
 pip install tftpos[mysql]     # pymysql (MySQL/MariaDB)
