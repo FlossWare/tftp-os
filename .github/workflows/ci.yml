@@ -6,10 +6,15 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
@@ -20,6 +25,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
       - name: Install dependencies
         run: pip install -e ".[dev]"
@@ -35,3 +48,77 @@ jobs:
 
       - name: Security scan
         run: bandit -r tftpos/ -s B101
+
+  quality-gate:
+    if: github.event_name == 'pull_request'
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run coverage
+        id: coverage
+        run: |
+          pytest --timeout=60 -q -m "not integration" \
+            --cov=tftpos --cov-branch --cov-report=term 2>&1 | tee coverage.txt
+          TOTAL=$(grep -oP 'TOTAL\s+\d+\s+\d+\s+\d+\s+\d+\s+\K\d+' coverage.txt || echo "0")
+          echo "pct=${TOTAL}" >> "$GITHUB_OUTPUT"
+
+      - name: Run lint
+        id: lint
+        continue-on-error: true
+        run: |
+          ISSUES=$(ruff check tftpos/ 2>&1 | grep -c ":" || echo "0")
+          echo "issues=${ISSUES}" >> "$GITHUB_OUTPUT"
+
+      - name: Run type check
+        id: typecheck
+        continue-on-error: true
+        run: |
+          ERRORS=$(mypy tftpos/ 2>&1 | grep -oP 'Found \K\d+' || echo "0")
+          echo "errors=${ERRORS}" >> "$GITHUB_OUTPUT"
+
+      - name: Run security scan
+        id: security
+        continue-on-error: true
+        run: |
+          ISSUES=$(bandit -r tftpos/ -s B101 -f json 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('results',[])))" || echo "0")
+          echo "issues=${ISSUES}" >> "$GITHUB_OUTPUT"
+
+      - name: Post quality report
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const cov = '${{ steps.coverage.outputs.pct }}';
+            const ruff = '${{ steps.lint.outputs.issues }}';
+            const mypy = '${{ steps.typecheck.outputs.errors }}';
+            const bandit = '${{ steps.security.outputs.issues }}';
+
+            const pass = (ok) => ok ? ':white_check_mark: Pass' : ':x: FAIL';
+
+            const body = `## Quality Gate Report
+
+            | Check | Status | Details |
+            |-------|--------|---------|
+            | **Coverage** | ${pass(cov >= 75)} | ${cov}% (threshold: 75%) |
+            | **Ruff** | ${pass(ruff == 0)} | ${ruff} issues |
+            | **MyPy** | ${pass(mypy == 0)} | ${mypy} errors |
+            | **Bandit** | ${pass(bandit == 0)} | ${bandit} issues |
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

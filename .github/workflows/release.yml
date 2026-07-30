@@ -1,0 +1,101 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.event.pusher.email != 'version-bump@flossware.org'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Get current version
+        id: current_version
+        run: |
+          VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Current version: $VERSION"
+
+      - name: Bump minor version
+        id: bump_version
+        run: |
+          CURRENT="${{ steps.current_version.outputs.version }}"
+          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | cut -d. -f2)
+          NEW_MINOR=$((MINOR + 1))
+          NEW_VERSION="${MAJOR}.${NEW_MINOR}"
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Bumping $CURRENT -> $NEW_VERSION"
+
+      - name: Update version in pyproject.toml
+        run: |
+          sed -i 's/^version = ".*"/version = "${{ steps.bump_version.outputs.new_version }}"/' pyproject.toml
+
+      - name: Setup git credentials
+        uses: oleksiyrudenko/gha-git-credentials@latest
+        with:
+          global: true
+          name: "Version Bump"
+          email: "version-bump@flossware.org"
+          actor: "VersionBump"
+          token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Commit version bump
+        run: |
+          git add pyproject.toml
+          git commit -m "chore: bump version to ${{ steps.bump_version.outputs.new_version }}"
+          git push
+
+      - name: Create and push tag
+        run: |
+          git tag -a "v${{ steps.bump_version.outputs.new_version }}" \
+            -m "Release v${{ steps.bump_version.outputs.new_version }}"
+          git push origin "v${{ steps.bump_version.outputs.new_version }}"
+
+      - name: Build package
+        run: python -m build
+
+      - name: Check package
+        run: twine check dist/*
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: twine upload dist/*
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.bump_version.outputs.new_version }}" \
+            --title "tftpos v${{ steps.bump_version.outputs.new_version }}" \
+            --notes "$(cat <<'EOF'
+          ## tftpos v${{ steps.bump_version.outputs.new_version }}
+
+          ### Installation
+          ```bash
+          pip install tftpos==${{ steps.bump_version.outputs.new_version }}
+          ```
+
+          ### Changes
+          See [commit history](https://github.com/FlossWare/tftp-os/commits/main) for details.
+          EOF
+          )"
