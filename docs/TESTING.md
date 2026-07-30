@@ -26,6 +26,8 @@ pytest -x --no-cov
 
 ```
 tests/
+  plugins/
+    test_firmware.py      - E2EFirmwarePlugin, iPXE binary helper
   test_audit.py           - AuditLogger, event logging, query
   test_auth.py            - ApiKeyStore, RBAC, role hierarchy
   test_benchmark.py       - Performance benchmarks
@@ -33,6 +35,7 @@ tests/
   test_cloud_init.py      - Cloud-init config generation
   test_cluster.py         - ClusterManager, ordered provisioning
   test_db.py              - StorageBackend implementations
+  test_e2e_vm_boot.py     - E2E VM PXE boot (integration, 15 tests)
   test_errors.py          - Exception hierarchy, format_error
   test_iso_detect.py      - ISO/image detection
   test_logging_config.py  - JSON/syslog logging, correlation IDs
@@ -50,7 +53,7 @@ tests/
   test_webhooks.py        - WebhookManager, HMAC signatures
 ```
 
-22 test files, 954 tests total.
+24 test files, 965 tests total (950 unit + 15 integration).
 
 ## Coverage
 
