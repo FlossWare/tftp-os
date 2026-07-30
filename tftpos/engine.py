@@ -15,6 +15,7 @@ from tftpos.config import TftpOSConfig, load_profile
 from tftpos.matcher import HostMatcher
 from tftpos.models import HostRule, ProvisionProfile
 from tftpos.registry import PluginRegistry
+from tftpos.staging import stage as stage_firmware
 from tftpos.state import ProvisionState, ProvisionTracker
 
 logger = logging.getLogger("tftpos.engine")
@@ -149,6 +150,28 @@ class FirmwareEngine:
     def invalidate_caches(self, mac: Optional[str] = None) -> int:
         _cached_load_profile.cache_clear()
         return 0
+
+    def stage(self, mac: str, **kwargs) -> Path:
+        """Resolve a MAC to firmware and stage it under tftp_root.
+
+        Calls :meth:`serve` to resolve the firmware path, then
+        :func:`tftpos.staging.stage` to place it under
+        ``config.tftp_root``.  Extra *kwargs* are forwarded to
+        both ``serve`` and ``stage_firmware`` (the staging
+        keyword arguments ``name`` and ``symlink`` are extracted
+        first).
+        """
+        # Separate staging kwargs from serve kwargs
+        stage_name = kwargs.pop("name", None)
+        stage_symlink = kwargs.pop("symlink", True)
+
+        firmware_path = self.serve(mac, **kwargs)
+        return stage_firmware(
+            firmware_path=firmware_path,
+            tftp_root=self._config.tftp_root,
+            name=stage_name,
+            symlink=stage_symlink,
+        )
 
     def base_url(self) -> str:
         scheme = (
