@@ -1,19 +1,19 @@
-# Writing TftpOS Firmware Plugins
+# Writing tftp-os Firmware Plugins
 
-A developer tutorial for writing plugins that tell TftpOS how to resolve firmware paths for different device types.
+A developer tutorial for writing plugins that tell tftp-os how to resolve firmware paths for different device types.
 
 ## Overview
 
-TftpOS uses plugins to map a provisioning request to a firmware file on disk. When TftpOS receives a boot request, the engine looks up the device's profile, finds the plugin registered for that profile's `os_family`, validates the profile, and asks the plugin for the firmware file path. That path is what gets served over TFTP.
+tftp-os uses plugins to map a provisioning request to a firmware file on disk. When tftp-os receives a boot request, the engine looks up the device's profile, finds the plugin registered for that profile's `os_family`, validates the profile, and asks the plugin for the firmware file path. That path is what gets served over TFTP.
 
 You need a plugin when:
 
-- You are provisioning a device type that TftpOS does not already have a plugin for
+- You are provisioning a device type that tftp-os does not already have a plugin for
 - The firmware path layout for your devices does not match an existing plugin
 - You need custom validation logic (required fields, version constraints, architecture checks)
 - You need to extract firmware from archive files (`.tar.gz`, `.img`, etc.)
 
-TftpOS ships with no built-in firmware plugins. You write them yourself, or use PxeOS's OS plugins if you are doing full PXE boot provisioning.
+tftp-os ships with no built-in firmware plugins. You write them yourself, or use PxeOS's OS plugins if you are doing full PXE boot provisioning.
 
 ## FirmwarePlugin ABC
 
@@ -239,7 +239,7 @@ class DDWRTPlugin(FirmwarePlugin):
 
 ## Registration
 
-Three ways to make TftpOS find your plugin.
+Three ways to make tftp-os find your plugin.
 
 ### Entry points (recommended for installable packages)
 
@@ -594,9 +594,9 @@ pytest tests/test_openwrt_plugin.py -v
 
 ## FirmwarePlugin vs OSPlugin
 
-TftpOS defines `FirmwarePlugin`. PxeOS defines `OSPlugin`, which extends `FirmwarePlugin`. They serve different purposes.
+tftp-os defines `FirmwarePlugin`. PxeOS defines `OSPlugin`, which extends `FirmwarePlugin`. They serve different purposes.
 
-### FirmwarePlugin (TftpOS -- `tftpos/plugins/base.py`)
+### FirmwarePlugin (tftp-os -- `tftpos/plugins/base.py`)
 
 For serving firmware files. Routers, embedded devices, IoT hardware -- anything where provisioning means "serve this binary over TFTP."
 
@@ -623,12 +623,12 @@ OSPlugin also provides a default `firmware_path()` that delegates to `boot_asset
 
 | Scenario | Use |
 |----------|-----|
-| Router firmware (OpenWRT, DD-WRT, FreshTomato) | `FirmwarePlugin` (TftpOS) |
-| Embedded device firmware | `FirmwarePlugin` (TftpOS) |
-| IoT device images | `FirmwarePlugin` (TftpOS) |
+| Router firmware (OpenWRT, DD-WRT, FreshTomato) | `FirmwarePlugin` (tftp-os) |
+| Embedded device firmware | `FirmwarePlugin` (tftp-os) |
+| IoT device images | `FirmwarePlugin` (tftp-os) |
 | Linux OS installer (Fedora, Ubuntu, Debian) | `OSPlugin` (PxeOS) |
 | Windows installer via iPXE | `OSPlugin` (PxeOS) |
 | BSD installer via iPXE | `OSPlugin` (PxeOS) |
 | Anything with kernel + initrd + autoinstall | `OSPlugin` (PxeOS) |
 
-If you are writing a plugin for TftpOS (this project), implement `FirmwarePlugin`. If you need iPXE scripts, autoinstall templates, or ISO extraction, you need PxeOS and its `OSPlugin`.
+If you are writing a plugin for tftp-os (this project), implement `FirmwarePlugin`. If you need iPXE scripts, autoinstall templates, or ISO extraction, you need PxeOS and its `OSPlugin`.

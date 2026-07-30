@@ -54,7 +54,7 @@ Keys are stored as SHA-256 hashes in `<data_dir>/auth_keys.json`. Raw keys are n
 
 ### FastAPI integration
 
-tftp-os is a pure library and does not include FastAPI glue code. The `require_role()` dependency and `RateLimitMiddleware` live in the separate [flossware-tftpos-web](https://github.com/FlossWare/flossware-tftpos-web) application repository. See that project for FastAPI auth examples.
+tftp-os is a pure library and does not include FastAPI glue code. The `require_role()` dependency and `RateLimitMiddleware` live in the separate [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos) application repository (web frontend is in the `flossware-tftpos-web/` subdirectory). See that project for FastAPI auth examples.
 
 ## Rate Limiting
 
@@ -79,13 +79,13 @@ auth_requests_per_minute = 10.0
 auth_burst = 5
 ```
 
-Rate-limited responses return HTTP 429 with a `Retry-After` header.
+The `RateLimiter` class tracks request rates per key and rejects requests that exceed the configured limits. Applications using this in HTTP middleware can return 429 responses with a `Retry-After` header.
 
 ## TLS
 
 ### Auto-generated self-signed certificates
 
-By default, tftp-os generates a self-signed certificate on first startup when `tls_auto_generate = true` (the default). Certificates are stored in `<data_dir>/tls/`.
+The TLS module can generate a self-signed certificate when `generate_cert()` is called and `tls_auto_generate = true` (the default). Certificates are stored in `<data_dir>/tls/`.
 
 ### Custom certificates
 
@@ -113,7 +113,7 @@ auto_generate = false
 
 ### Reverse proxy
 
-For production, terminate TLS at a reverse proxy (nginx, HAProxy) and run tftp-os behind it without TLS:
+When deploying an application built on tftp-os behind a reverse proxy (nginx, HAProxy), terminate TLS at the proxy layer and disable auto-generation in the library configuration:
 
 ```toml
 [tls]

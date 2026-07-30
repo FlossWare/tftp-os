@@ -1,4 +1,4 @@
-# TftpOS Module Scope
+# tftp-os Module Scope
 
 This document defines which modules are **core** (essential for any firmware
 path resolution), **extended** (useful but not required for basic usage), and
@@ -43,7 +43,7 @@ and confirmed by the umbrella architecture in #17.
 
 ## Extended Modules (installed, documented as optional/non-core)
 
-These modules ship with TftpOS but are not required for basic firmware path
+These modules ship with tftp-os but are not required for basic firmware path
 resolution. They provide value for more advanced provisioning workflows. Users
 who only need "MAC -> firmware path" can ignore them.
 
@@ -95,7 +95,7 @@ application layer) or other downstream projects.
 | `webhooks.py` | Webhook event notifications | 3/3 APP-LAYER | flossware-tftpos |
 | `metrics.py` | Prometheus metrics export | 3/3 APP-LAYER | flossware-tftpos |
 | `audit.py` | Audit trail logging | 3/3 APP-LAYER | flossware-tftpos |
-| `observability.py` | Observability utilities | 3/3 APP-LAYER | flossware-tftpos |
+| `observability.py` | Observability utilities (does not yet exist) | 3/3 APP-LAYER | flossware-tftpos |
 
 ---
 
@@ -125,7 +125,7 @@ projects as the ecosystem matures.
   Resolves issues #3, #14, #15, #16. Aligned with umbrella #17 architecture.
 - **Approach chosen:** Option B from #3 and #14 (keep in-tree, document as
   non-core). Physical restructuring deferred to later issues.
-- **iso_detect + mnemonics (#15):** Keep as extended in TftpOS for now;
+- **iso_detect + mnemonics (#15):** Keep as extended in tftp-os for now;
   reassess after PxeOS composition is finalized.
 - **Hypervisor backends (#16):** Documented as non-core extended modules;
   `pip install tftpos` does not require hypervisor dependencies.
@@ -139,4 +139,4 @@ projects as the ecosystem matures.
 - #14 -- Move or demote PxeOS-oriented modules out of core foundation
 - #15 -- Decide ownership of iso_detect + mnemonics
 - #16 -- Hypervisor backends: mark optional or move out of core
-- #17 -- Umbrella: solidify TftpOS for real
+- #17 -- Umbrella: solidify tftp-os for real
