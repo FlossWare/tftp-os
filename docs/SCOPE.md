@@ -67,14 +67,14 @@ external packages (cryptography, psycopg2, pymysql respectively).
 
 ### Infrastructure and Security
 
-| Module | Purpose | Consensus |
-|--------|---------|-----------|
-| `auth.py` | Authentication and RBAC | 2/3 EXTENDED, 1/3 CORE |
-| `tls.py` | TLS certificate handling | Split (CORE/EXTENDED/APP-LAYER) |
-| `secrets.py` | Secrets management | 2/3 APP-LAYER -- kept extended as a library utility |
-| `cache.py` | Response and object caching | 2/3 EXTENDED, 1/3 CORE |
-| `rate_limit.py` | Request rate limiting | 2/3 EXTENDED, 1/3 CORE |
-| `named_objects.py` | Named object registry | 2/3 EXTENDED, 1/3 CORE |
+| Module | Purpose | Consensus | Extra |
+|--------|---------|-----------|-------|
+| `auth.py` | Authentication and RBAC | 2/3 EXTENDED, 1/3 CORE | always installed |
+| `tls.py` | TLS certificate handling | Split (CORE/EXTENDED/APP-LAYER) | always installed |
+| `secrets.py` | Secrets management | 2/3 APP-LAYER -- kept extended as a library utility | always installed |
+| `cache.py` | Response and object caching | 2/3 EXTENDED, 1/3 CORE | always installed |
+| `rate_limit.py` | Request rate limiting | 2/3 EXTENDED, 1/3 CORE | always installed |
+| `named_objects.py` | Named object registry | 2/3 EXTENDED, 1/3 CORE | always installed |
 
 ### Provisioning Extras
 
