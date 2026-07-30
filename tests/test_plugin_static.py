@@ -231,6 +231,25 @@ class TestFirmwarePathErrors:
         with pytest.raises(ValueError, match="arch must not be empty"):
             plugin.firmware_path(profile)
 
+    def test_raises_on_dotdot_traversal(self, tmp_path):
+        """Pure '..' without slashes must still be rejected."""
+        plugin = StaticFirmwarePlugin(
+            distro_root=tmp_path,
+            os_family="openwrt",
+        )
+        profile = _make_profile(os_version="..")
+        with pytest.raises(ValueError, match="invalid characters"):
+            plugin.firmware_path(profile)
+
+    def test_raises_on_single_dot(self, tmp_path):
+        plugin = StaticFirmwarePlugin(
+            distro_root=tmp_path,
+            os_family="openwrt",
+        )
+        profile = _make_profile(os_version=".")
+        with pytest.raises(ValueError, match="invalid characters"):
+            plugin.firmware_path(profile)
+
 
 # ---------------------------------------------------------------------------
 # validate_profile (inherited from FirmwarePlugin)

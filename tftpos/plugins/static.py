@@ -41,10 +41,18 @@ from tftpos.plugins.base import FirmwarePlugin
 _SAFE_SEGMENT = re.compile(r"^[\w.\-]+$")
 
 
-def _validate_segment(value: str, label: str) -> None:
+def _validate_segment(value: object, label: str) -> None:
     """Reject path segments that could cause directory traversal."""
-    if not value:
+    if value is None or value == "":
         raise ValueError(f"{label} must not be empty")
+    if not isinstance(value, str):
+        raise ValueError(
+            f"{label} must be a string, got {type(value).__name__}"
+        )
+    if value in (".", ".."):
+        raise ValueError(
+            f"{label} contains invalid characters: {value!r}"
+        )
     if not _SAFE_SEGMENT.match(value):
         raise ValueError(
             f"{label} contains invalid characters: {value!r}"
@@ -120,7 +128,7 @@ class StaticFirmwarePlugin(FirmwarePlugin):
         resolved = (self._distro_root / Path(*parts)).resolve()
 
         # Guard against directory traversal
-        if not str(resolved).startswith(str(self._distro_root)):
+        if not resolved.is_relative_to(self._distro_root):
             raise ValueError(
                 f"resolved path escapes distro_root: {resolved}"
             )
