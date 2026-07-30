@@ -15,26 +15,12 @@ import threading
 import time
 import uuid
 from collections import deque
-from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any, Deque, Dict, List, Optional
+
+from tftpos.models import AuditConfig
 
 
 logger = logging.getLogger("tftpos.audit")
-
-
-@dataclass
-class AuditConfig:
-    """Configuration for audit logging (``[audit]`` in tftpos.toml)."""
-
-    enabled: bool = True
-    log_file: Optional[Path] = None
-    max_bytes: int = 52_428_800  # 50 MB
-    backup_count: int = 10
-    log_to_stdout: bool = False
-    buffer_size: int = 1000  # in-memory ring buffer for API queries
-    syslog_enabled: bool = False
-    syslog_address: str = "/dev/log"
 
 
 class AuditEvent:

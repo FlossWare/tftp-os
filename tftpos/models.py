@@ -5,7 +5,8 @@ from __future__ import annotations
 import enum
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
+from urllib.parse import urlparse
 
 
 class BootFirmware(enum.Enum):
@@ -75,3 +76,35 @@ class HostRule:
     deploy_mode: str = "tftp"  # "tftp" or "image"
     console_type: Optional[str] = None  # "vnc", "spice", or "serial"
     console_endpoint: Optional[str] = None  # "host:port"
+
+
+@dataclass
+class AuditConfig:
+    """Configuration for audit logging (``[audit]`` in tftpos.toml)."""
+
+    enabled: bool = True
+    log_file: Optional[Path] = None
+    max_bytes: int = 52_428_800  # 50 MB
+    backup_count: int = 10
+    log_to_stdout: bool = False
+    buffer_size: int = 1000  # in-memory ring buffer for API queries
+    syslog_enabled: bool = False
+    syslog_address: str = "/dev/log"
+
+
+@dataclass
+class WebhookConfig:
+    """Configuration for a single webhook endpoint."""
+
+    url: str
+    events: List[str] = field(default_factory=list)
+    secret: str = ""
+    retry_count: int = 3
+    timeout: float = 10.0
+
+    def __post_init__(self) -> None:
+        parsed = urlparse(self.url)
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError(
+                f"webhook url must use http or https: {self.url!r}"
+            )

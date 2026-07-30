@@ -46,6 +46,25 @@ dependencies = [
 tls = ["cryptography>=41.0,<51.0"]
 postgres = ["psycopg2-binary>=2.9,<3.0"]
 mysql = ["pymysql>=1.0,<2.0"]
+# Extended module groups -- no extra pip dependencies today, but the extras
+# document which feature areas exist and provide a place to add dependencies
+# if the modules grow external requirements in the future.
+power = []        # power.py (BMC/IPMI/Redfish control)
+hypervisor = []   # client/libvirt_backend, bhyve_backend, hyperv_backend, vmm_backend
+cloud = []        # cloud_init.py, cloud_image.py
+cluster = []      # cluster.py, repo_mirror.py
+observability = []  # metrics.py, audit.py, webhooks.py, console.py
+# Convenience: install all extended modules at once.
+all = [
+    "tftpos[tls]",
+    "tftpos[postgres]",
+    "tftpos[mysql]",
+    "tftpos[power]",
+    "tftpos[hypervisor]",
+    "tftpos[cloud]",
+    "tftpos[cluster]",
+    "tftpos[observability]",
+]
 dev = [
     "pytest>=7.0.0,<9.0",
     "pytest-cov>=4.0.0,<6.0",
