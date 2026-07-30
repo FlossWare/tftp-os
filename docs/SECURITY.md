@@ -4,11 +4,11 @@
 
 | Version | Supported |
 |---------|-----------|
-| 1.0.x | Yes |
+| 0.1.x | Yes |
 
 ## Authentication and Authorization
 
-TftpOS provides role-based access control (RBAC) with API keys. Auth is **disabled by default**.
+tftp-os provides role-based access control (RBAC) with API keys. Auth is **disabled by default**.
 
 ### Roles
 
@@ -54,19 +54,7 @@ Keys are stored as SHA-256 hashes in `<data_dir>/auth_keys.json`. Raw keys are n
 
 ### FastAPI integration
 
-When using the optional API server (`pip install tftpos[api]`), use `require_role()` as a FastAPI dependency:
-
-```python
-from tftpos.auth import require_role, Role
-
-@app.get("/hosts")
-async def list_hosts(auth=Depends(require_role(Role.VIEWER))):
-    ...
-
-@app.post("/hosts")
-async def create_host(auth=Depends(require_role(Role.OPERATOR))):
-    ...
-```
+tftp-os is a pure library and does not include FastAPI glue code. The `require_role()` dependency and `RateLimitMiddleware` live in the separate [flossware-tftpos-web](https://github.com/FlossWare/flossware-tftpos-web) application repository. See that project for FastAPI auth examples.
 
 ## Rate Limiting
 
@@ -97,7 +85,7 @@ Rate-limited responses return HTTP 429 with a `Retry-After` header.
 
 ### Auto-generated self-signed certificates
 
-By default, TftpOS generates a self-signed certificate on first startup when `tls_auto_generate = true` (the default). Certificates are stored in `<data_dir>/tls/`.
+By default, tftp-os generates a self-signed certificate on first startup when `tls_auto_generate = true` (the default). Certificates are stored in `<data_dir>/tls/`.
 
 ### Custom certificates
 
@@ -125,7 +113,7 @@ auto_generate = false
 
 ### Reverse proxy
 
-For production, terminate TLS at a reverse proxy (nginx, HAProxy) and run TftpOS behind it without TLS:
+For production, terminate TLS at a reverse proxy (nginx, HAProxy) and run tftp-os behind it without TLS:
 
 ```toml
 [tls]
@@ -134,7 +122,7 @@ auto_generate = false
 
 ## Input Validation
 
-TftpOS validates and sanitizes all external input at the system boundary. The `tftpos.validation` module provides:
+tftp-os validates and sanitizes all external input at the system boundary. The `tftpos.validation` module provides:
 
 | Function | Purpose |
 |----------|---------|
@@ -219,7 +207,7 @@ Audit logs support file output, stdout, and syslog. See [DEPLOYMENT.md](DEPLOYME
 
 ## Vulnerability Reporting
 
-Report security vulnerabilities by opening a private issue at [github.com/FlossWare/TftpOS/security](https://github.com/FlossWare/TftpOS/security/advisories).
+Report security vulnerabilities by opening a private issue at [github.com/FlossWare/tftp-os/security](https://github.com/FlossWare/tftp-os/security/advisories).
 
 Include:
 
