@@ -15,7 +15,7 @@ pip install tftpos[hypervisor]    # + libvirt, bhyve, Hyper-V, vmm backends
 pip install tftpos[cloud]         # + cloud-init, cloud-image handling
 pip install tftpos[cluster]       # + cluster provisioning, repo mirrors
 pip install tftpos[observability] # + metrics, audit, webhooks, console
-pip install tftpos[all]           # everything (includes tls + postgres)
+pip install tftpos[all]           # everything (includes tls, postgres, mysql)
 ```
 
 tftp-os is a **reusable library** -- it contains no CLI, no REST API routes, and no UI. It is designed as a foundation that anyone can build on. See [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos) for a reference application with desktop, mobile, and web frontends.
@@ -945,7 +945,7 @@ pip install tftpos[tls]           # cryptography (TLS cert generation)
 pip install tftpos[postgres]      # psycopg2 (PostgreSQL)
 pip install tftpos[mysql]         # pymysql (MySQL/MariaDB)
 
-# Extended module groups (no additional pip deps today)
+# Extended module groups (no additional pip deps; markers only today)
 pip install tftpos[power]         # BMC/IPMI/Redfish power control
 pip install tftpos[hypervisor]    # libvirt, bhyve, Hyper-V, vmm backends
 pip install tftpos[cloud]         # cloud-init, cloud-image handling
@@ -953,7 +953,7 @@ pip install tftpos[cluster]       # cluster provisioning, repo mirrors
 pip install tftpos[observability] # metrics, audit, webhooks, console
 
 # Convenience
-pip install tftpos[all]           # all of the above
+pip install tftpos[all]           # all of the above (includes tls, postgres, mysql)
 pip install tftpos[dev]           # pytest, ruff, mypy, bandit, coverage
 ```
 

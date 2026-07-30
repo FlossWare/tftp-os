@@ -58,6 +58,7 @@ observability = []  # metrics.py, audit.py, webhooks.py, console.py
 all = [
     "tftpos[tls]",
     "tftpos[postgres]",
+    "tftpos[mysql]",
     "tftpos[power]",
     "tftpos[hypervisor]",
     "tftpos[cloud]",

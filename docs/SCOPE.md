@@ -21,7 +21,7 @@ pip install tftpos[hypervisor]    # libvirt, bhyve, Hyper-V, vmm backends
 pip install tftpos[cloud]         # cloud-init, cloud-image handling
 pip install tftpos[cluster]       # cluster provisioning, repo mirrors
 pip install tftpos[observability] # metrics, audit, webhooks, console
-pip install tftpos[all]           # everything (includes tls + postgres)
+pip install tftpos[all]           # everything (includes tls, postgres, mysql)
 ```
 
 ---
@@ -59,9 +59,11 @@ These modules ship with tftp-os but are not required for basic firmware path
 resolution. They provide value for more advanced provisioning workflows. Users
 who only need "MAC -> firmware path" can ignore them.
 
-Each group maps to a pip extra (e.g. `pip install tftpos[power]`). The extras
-carry no additional pip dependencies today but document which feature area a
-module belongs to.
+Each group maps to a pip extra (e.g. `pip install tftpos[power]`). The
+extended module extras (power, hypervisor, cloud, cluster, observability)
+carry no additional pip dependencies today but document which feature area
+a module belongs to. The `tls`, `postgres`, and `mysql` extras do pull in
+external packages (cryptography, psycopg2, pymysql respectively).
 
 ### Infrastructure and Security
 
@@ -80,8 +82,8 @@ module belongs to.
 |--------|---------|-----------|-------|
 | `cloud_init.py` | Cloud-init config generation | 2/3 APP-LAYER -- kept extended for now | `cloud` |
 | `cloud_image.py` | Cloud image handling | 2/3 APP-LAYER -- kept extended for now | `cloud` |
-| `iso_detect.py` | ISO file detection and distro identification | Split -- kept extended per #17 | (core-adjacent) |
-| `mnemonics.py` | Human-readable distro aliases | 3/3 EXTENDED | (core-adjacent) |
+| `iso_detect.py` | ISO file detection and distro identification | Split -- kept extended per #17 | always installed |
+| `mnemonics.py` | Human-readable distro aliases | 3/3 EXTENDED | always installed |
 | `repo_mirror.py` | Repository mirror management | Split -- kept extended | `cluster` |
 | `cluster.py` | Multi-host ordered provisioning | 3/3 EXTENDED | `cluster` |
 | `console.py` | Serial/VNC/SPICE console proxy | 3/3 EXTENDED | `observability` |
