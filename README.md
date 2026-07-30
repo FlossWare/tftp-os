@@ -915,7 +915,7 @@ engine = ProvisioningEngine(registry, matcher, config)
 
 ## Known Limitations
 
-- **No real-world deployment** -- tftp-os has not been used to serve firmware to actual devices ([#5](https://github.com/FlossWare/tftp-os/issues/5))
+- **No production deployment yet** -- use the `tftpos.staging` module (`stage()`, `unstage()`, `list_staged()`) to place resolved firmware under `tftp_root` for an external TFTP daemon; see [#5](https://github.com/FlossWare/tftp-os/issues/5) for end-to-end validation status
 - **No REST API implementation** -- this is intentional; tftp-os is a pure library with no API routes
 - **Plugin ecosystem** -- No built-in firmware plugins ship with tftp-os; you must write your own or use PxeOS's OS plugins ([#4](https://github.com/FlossWare/tftp-os/issues/4))
 - **IPMI/Redfish** -- Power control shells out to `ipmitool` and makes HTTP requests to Redfish endpoints; not tested against real BMCs
