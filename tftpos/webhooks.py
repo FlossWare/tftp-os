@@ -17,7 +17,8 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, FrozenSet, List, Optional
-from urllib.parse import urlparse
+
+from tftpos.models import WebhookConfig
 
 logger = logging.getLogger("tftpos.webhooks")
 
@@ -29,24 +30,6 @@ SUPPORTED_EVENTS = frozenset({
     "provision.failed",
     "netboot.disabled",
 })
-
-
-@dataclass
-class WebhookConfig:
-    """Configuration for a single webhook endpoint."""
-
-    url: str
-    events: List[str] = field(default_factory=list)
-    secret: str = ""
-    retry_count: int = 3
-    timeout: float = 10.0
-
-    def __post_init__(self) -> None:
-        parsed = urlparse(self.url)
-        if parsed.scheme not in ("http", "https"):
-            raise ValueError(
-                f"webhook url must use http or https: {self.url!r}"
-            )
 
 
 @dataclass

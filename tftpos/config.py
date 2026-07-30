@@ -7,10 +7,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
-from tftpos.audit import AuditConfig
 from tftpos.logging_config import LoggingConfig
-from tftpos.models import BootFirmware, HostRule, ProvisionProfile
-from tftpos.webhooks import WebhookConfig
+from tftpos.models import (
+    AuditConfig,
+    BootFirmware,
+    HostRule,
+    ProvisionProfile,
+    WebhookConfig,
+)
 
 if sys.version_info >= (3, 11):
     import tomllib

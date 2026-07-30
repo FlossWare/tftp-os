@@ -1,12 +1,24 @@
 # tftp-os
 
-TFTP-based firmware provisioning library — reusable base for network boot applications.
+TFTP-based firmware provisioning library with optional extras for power control, hypervisors, cloud, and observability.
 
 ## Overview
 
-tftp-os is a standalone firmware provisioning library. Given a device's MAC address (or hostname, subnet, serial number, or group), tftp-os resolves which firmware file to serve, tracks provisioning state, and provides supporting infrastructure: cloud-init config generation, cloud image management, BMC power control, console access, hypervisor backends, audit logging, webhooks, and RBAC.
+tftp-os is a firmware provisioning library. Its core mission is simple: given a device's MAC address (or hostname, subnet, serial number, or group), resolve which firmware file to serve.
 
-tftp-os is a **reusable library** — it contains no CLI, no REST API routes, and no UI. It is designed as a foundation that anyone can build on. See [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos) for a reference application with desktop, mobile, and web frontends.
+Beyond the core, tftp-os ships optional extras for common provisioning workflows: BMC power control, hypervisor backends (libvirt, bhyve, Hyper-V, VMM), cloud-init config generation, cloud image management, cluster provisioning, audit logging, Prometheus metrics, webhooks, console access, and RBAC. Install only what you need:
+
+```bash
+pip install tftpos                # core: MAC -> firmware path
+pip install tftpos[power]         # + BMC/IPMI/Redfish power control
+pip install tftpos[hypervisor]    # + libvirt, bhyve, Hyper-V, vmm backends
+pip install tftpos[cloud]         # + cloud-init, cloud-image handling
+pip install tftpos[cluster]       # + cluster provisioning, repo mirrors
+pip install tftpos[observability] # + metrics, audit, webhooks, console
+pip install tftpos[all]           # everything (includes tls + postgres)
+```
+
+tftp-os is a **reusable library** -- it contains no CLI, no REST API routes, and no UI. It is designed as a foundation that anyone can build on. See [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos) for a reference application with desktop, mobile, and web frontends.
 
 tftp-os works on its own for scenarios where you need to serve firmware to devices -- router firmware (OpenWRT, DD-WRT, FreshTomato), embedded systems, IoT devices, or any TFTP-based provisioning workflow.
 
@@ -922,17 +934,27 @@ engine = ProvisioningEngine(registry, matcher, config)
 | Package | Version | Purpose |
 |---------|---------|---------|
 | jinja2 | >= 3.1 | Template rendering |
-| pydantic | >= 2.0 | Data validation |
 | sqlalchemy | >= 2.0 | Database ORM |
 | tomli | >= 2.0 | TOML parsing (Python < 3.11) |
 
 ### Optional dependency groups
 
 ```bash
-pip install tftpos[tls]       # cryptography (TLS cert generation)
-pip install tftpos[postgres]  # psycopg2 (PostgreSQL)
-pip install tftpos[mysql]     # pymysql (MySQL/MariaDB)
-pip install tftpos[dev]       # pytest, ruff, mypy, bandit, coverage
+# External dependencies
+pip install tftpos[tls]           # cryptography (TLS cert generation)
+pip install tftpos[postgres]      # psycopg2 (PostgreSQL)
+pip install tftpos[mysql]         # pymysql (MySQL/MariaDB)
+
+# Extended module groups (no additional pip deps today)
+pip install tftpos[power]         # BMC/IPMI/Redfish power control
+pip install tftpos[hypervisor]    # libvirt, bhyve, Hyper-V, vmm backends
+pip install tftpos[cloud]         # cloud-init, cloud-image handling
+pip install tftpos[cluster]       # cluster provisioning, repo mirrors
+pip install tftpos[observability] # metrics, audit, webhooks, console
+
+# Convenience
+pip install tftpos[all]           # all of the above
+pip install tftpos[dev]           # pytest, ruff, mypy, bandit, coverage
 ```
 
 ## Development
