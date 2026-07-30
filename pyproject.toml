@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tftpos"
-version = "1.0"
+version = "0.1.0"
 description = "TFTP-based firmware provisioning library — reusable base for network boot applications"
 readme = "README.md"
 license = {text = "GPL-3.0-or-later"}
@@ -44,11 +44,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-api = [
-    "fastapi>=0.100.0,<1.0",
-    "uvicorn>=0.22.0,<1.0",
-    "python-multipart>=0.0.6,<1.0",
-]
 tls = ["cryptography>=41.0,<51.0"]
 postgres = ["psycopg2-binary>=2.9,<3.0"]
 mysql = ["pymysql>=1.0,<2.0"]
@@ -64,6 +59,8 @@ dev = [
     "bandit>=1.7.5,<2.0",
 ]
 
+# Plugin namespace: intentionally empty. Third-party packages register plugins
+# here via their own pyproject.toml entry-points.
 [project.entry-points."tftpos.plugins"]
 
 [project.urls]
