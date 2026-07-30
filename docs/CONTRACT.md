@@ -135,7 +135,7 @@ These are explicit non-goals. pxe-os or other consumers own them:
 - **No autoinstall templates** -- kickstart, preseed, cloud-init *templates* belong in pxe-os; tftp-os provides raw `CloudInitConfig` generation but not OS-specific installer templates
 - **No DHCP management** -- tftp-os does not configure or manage DHCP servers
 - **No web UI** -- tftp-os is a pure library with no HTTP endpoints or frontend
-- **No REST API** -- FastAPI integration lives in [flossware-tftpos-web](https://github.com/FlossWare/flossware-tftpos-web)
+- **No REST API** -- FastAPI integration lives in [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos) (web frontend is in the `flossware-tftpos-web/` subdirectory)
 - **No OS-specific installer logic** -- distro-specific boot workflows belong in pxe-os plugins
 
 ## Extension Points
