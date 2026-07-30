@@ -92,6 +92,17 @@ engine = FirmwareEngine(registry, matcher, config)
 firmware_path = engine.serve(mac="aa:bb:cc:dd:ee:ff")
 ```
 
+## Integration with TFTP servers
+
+tftp-os resolves firmware paths — it does not speak the TFTP protocol.
+Pair it with any TFTP server (dnsmasq, tftpd-hpa, atftpd):
+
+1. tftp-os resolves MAC → firmware file path
+2. Your TFTP server serves that file to the device
+3. tftp-os tracks provisioning state
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for TFTP server setup.
+
 ## Architecture
 
 ```
@@ -893,9 +904,9 @@ engine = ProvisioningEngine(registry, matcher, config)
 
 ## Known Limitations
 
-- **No real-world deployment** -- tftp-os has not been used to serve firmware to actual devices
-- **No REST API implementation** -- FastAPI is an optional dependency; no API routes are defined
-- **Plugin ecosystem** -- No built-in firmware plugins ship with tftp-os; you must write your own or use PxeOS's OS plugins
+- **No real-world deployment** -- tftp-os has not been used to serve firmware to actual devices ([#5](https://github.com/FlossWare/tftp-os/issues/5))
+- **No REST API implementation** -- this is intentional; tftp-os is a pure library with no API routes
+- **Plugin ecosystem** -- No built-in firmware plugins ship with tftp-os; you must write your own or use PxeOS's OS plugins ([#4](https://github.com/FlossWare/tftp-os/issues/4))
 - **IPMI/Redfish** -- Power control shells out to `ipmitool` and makes HTTP requests to Redfish endpoints; not tested against real BMCs
 - **Hypervisor backends** -- Shell out to platform-specific CLI tools; tested with mocks only
 - **Cloud image import** -- Requires `qemu-img` and `wget`/`curl` on the host
@@ -933,6 +944,52 @@ git clone https://github.com/FlossWare/tftp-os.git
 cd tftp-os
 pip install -e ".[dev]"
 pytest
+
+# Lint and type-check
+ruff check tftpos/
+mypy tftpos/
+```
+
+### Try it locally
+
+```python
+import tempfile
+from pathlib import Path
+from tftpos.config import load_config, load_hosts
+from tftpos.engine import FirmwareEngine
+from tftpos.matcher import HostMatcher
+from tftpos.registry import PluginRegistry
+
+with tempfile.TemporaryDirectory() as tmp:
+    tmp_path = Path(tmp)
+
+    # Minimal config
+    (tmp_path / "tftpos.toml").write_text("""
+[server]
+host = "127.0.0.1"
+port = 8443
+[paths]
+tftp_root = "/tmp/tftp"
+data_dir = "{tmp}"
+[database]
+backend = "sqlite"
+url = "sqlite://"
+""".format(tmp=tmp))
+
+    # Host rule
+    (tmp_path / "hosts.toml").write_text("""
+[[host]]
+mac = "aa:bb:cc:dd:ee:ff"
+profile = "demo"
+os_family = "openwrt"
+os_version = "23.05"
+""")
+
+    config = load_config(tmp_path / "tftpos.toml")
+    rules = load_hosts(tmp_path / "hosts.toml")
+    engine = FirmwareEngine(PluginRegistry(), HostMatcher(rules), config)
+    result = engine.serve(mac="aa:bb:cc:dd:ee:ff")
+    print(result)
 ```
 
 See [docs/TESTING.md](docs/TESTING.md) for test structure and coverage targets.
