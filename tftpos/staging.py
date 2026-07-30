@@ -140,10 +140,17 @@ def stage(
             )
             os.close(tmp_fd)
             os.unlink(tmp_name)  # need the name free for symlink
-            os.symlink(
-                os.path.abspath(firmware_path), tmp_name
-            )
-            os.replace(tmp_name, target)
+            try:
+                os.symlink(
+                    os.path.abspath(firmware_path), tmp_name
+                )
+                os.replace(tmp_name, target)
+            except BaseException:
+                try:
+                    os.unlink(tmp_name)
+                except OSError:
+                    pass
+                raise
             logger.info(
                 "staged symlink %s -> %s",
                 target,
@@ -160,7 +167,6 @@ def stage(
                 shutil.copy2(firmware_path, tmp_name)
                 os.replace(tmp_name, target)
             except BaseException:
-                # Clean up tmp file on failure
                 try:
                     os.unlink(tmp_name)
                 except OSError:
@@ -199,11 +205,12 @@ def unstage(staged_path: Union[str, Path]) -> bool:
     staged_path = Path(staged_path)
     if staged_path.is_dir() and not staged_path.is_symlink():
         return False
-    if staged_path.exists() or staged_path.is_symlink():
+    try:
         staged_path.unlink()
         logger.info("unstaged %s", staged_path)
         return True
-    return False
+    except FileNotFoundError:
+        return False
 
 
 def list_staged(
