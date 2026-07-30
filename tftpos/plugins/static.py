@@ -86,6 +86,7 @@ class StaticFirmwarePlugin(FirmwarePlugin):
         include_arch: bool = False,
     ) -> None:
         self._distro_root = Path(distro_root).resolve()
+        _validate_segment(filename, "filename")
         self._os_family = os_family
         self._supported_versions = list(supported_versions or [])
         self._filename = filename

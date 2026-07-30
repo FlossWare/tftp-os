@@ -80,6 +80,14 @@ class TestProperties:
         )
         assert isinstance(plugin, FirmwarePlugin)
 
+    def test_rejects_traversal_in_filename(self):
+        with pytest.raises(ValueError, match="filename"):
+            StaticFirmwarePlugin(
+                distro_root="/srv",
+                os_family="openwrt",
+                filename="../etc/passwd",
+            )
+
 
 # ---------------------------------------------------------------------------
 # firmware_path — basic (no arch)
