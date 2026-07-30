@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 
 class _Counter:

@@ -156,7 +156,7 @@ def ensure_tls_certs(
     Returns
     -------
     tuple[Path, Path]
-        ``(cert_path, key_path)`` ready for use with uvicorn.
+        ``(cert_path, key_path)`` ready for use with a TLS-capable server.
     """
     # User provided both paths -- use them directly
     if cert_path and key_path:
