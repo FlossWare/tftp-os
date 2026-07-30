@@ -188,28 +188,76 @@ Host matching is driven by `HostRule` dataclasses loaded from TOML. To add new m
 
 Implement `tftpos.db.StorageBackend` to add new persistence targets. The interface requires six methods: `save`, `get`, `list_all`, `delete`, `clear`, `close`.
 
-## Stability Intent
+## Public API
 
-tftp-os is at version 0.x. The following modules are considered **stable public API** -- breaking changes will be documented and versioned:
+This section defines which modules constitute the public API surface.  It
+is the authoritative list and must stay in sync with `tftpos/__init__.py`
+(which declares the same surface via `__all__`) and `docs/SCOPE.md` (which
+provides the rationale for each classification).
 
-- `tftpos.engine` -- `FirmwareEngine`
-- `tftpos.matcher` -- `HostMatcher`
-- `tftpos.registry` -- `PluginRegistry`
-- `tftpos.config` -- `TftpOSConfig`, `load_config`, `load_hosts`, `load_profile`
-- `tftpos.models` -- all dataclasses and enums
-- `tftpos.state` -- `ProvisionTracker`, `ProvisionState`, `ProvisionRecord`
-- `tftpos.plugins.base` -- `FirmwarePlugin`
-- `tftpos.db` -- `StorageBackend` and built-in implementations
-- `tftpos.errors` -- exception hierarchy
+### Stable public modules (core)
 
-**Internals that may change** without notice:
+These modules are listed in `tftpos.__all__` and form the foundation
+required for firmware path resolution.  Breaking changes will be
+documented in the changelog and reflected in the version number.
 
-- Cache key formats and TTL defaults (`tftpos.cache`)
-- Logging internals (`tftpos.logging_config`)
-- Metrics counter names (`tftpos.metrics`)
-- Named object store schema (`tftpos.named_objects`)
-- Console proxy implementation details (`tftpos.console`)
-- Cluster provisioning orchestration (`tftpos.cluster`) -- still evolving
+| Module | Key exports |
+|--------|-------------|
+| `tftpos.config` | `TftpOSConfig`, `load_config`, `load_hosts`, `load_profile` |
+| `tftpos.engine` | `FirmwareEngine` |
+| `tftpos.matcher` | `HostMatcher` |
+| `tftpos.registry` | `PluginRegistry` |
+| `tftpos.plugins.base` | `FirmwarePlugin` |
+| `tftpos.models` | `HostRule`, `ProvisionProfile`, `BootFirmware`, `DistroAssets`, `CloudImage` |
+| `tftpos.state` | `ProvisionTracker`, `ProvisionState`, `ProvisionRecord` |
+| `tftpos.errors` | `TftpOSError`, `ConfigError`, `ValidationError`, `ProvisionError`, `PluginError`, `format_error` |
+| `tftpos.db` | `StorageBackend`, `SQLAlchemyBackend`, `SQLiteBackend`, `JSONBackend`, `MemoryBackend` |
+| `tftpos.validation` | input validation and sanitization helpers |
+| `tftpos.logging_config` | logging setup used by core modules |
+
+### Extended modules (shipped, not part of the stable surface)
+
+These modules ship with tftp-os but are **not** required for basic
+firmware path resolution.  Their APIs may change without notice between
+0.y releases.
+
+| Module | Purpose |
+|--------|---------|
+| `tftpos.auth` | Authentication and RBAC |
+| `tftpos.tls` | TLS certificate handling |
+| `tftpos.secrets` | Secrets management |
+| `tftpos.cache` | Response and object caching |
+| `tftpos.rate_limit` | Request rate limiting |
+| `tftpos.named_objects` | Named object registry |
+| `tftpos.cloud_init` | Cloud-init config generation |
+| `tftpos.cloud_image` | Cloud image handling |
+| `tftpos.iso_detect` | ISO detection and distro identification |
+| `tftpos.mnemonics` | Human-readable distro aliases |
+| `tftpos.repo_mirror` | Repository mirror management |
+| `tftpos.cluster` | Multi-host ordered provisioning |
+| `tftpos.console` | Serial/VNC/SPICE console proxy |
+| `tftpos.power` | BMC/IPMI/Redfish power control |
+| `tftpos.client.*` | Hypervisor backends (libvirt, bhyve, Hyper-V, VMM) |
+
+### App-layer modules (candidates for migration)
+
+These modules are candidates for migration to **flossware-tftpos** (the
+application layer).  They remain in-tree for now but should not be
+considered part of the library's long-term surface.
+
+| Module | Purpose |
+|--------|---------|
+| `tftpos.webhooks` | Webhook event notifications |
+| `tftpos.metrics` | Prometheus metrics export |
+| `tftpos.audit` | Audit trail logging |
+
+### Versioning policy
+
+- **0.y (current):** The public API may change between minor releases.
+  Breaking changes will be documented but are expected while the library
+  matures.
+- **1.0+:** The public API modules listed above become stable.  Breaking
+  changes require a major version bump (semver).
 
 ## How pxe-os Composes tftp-os
 
