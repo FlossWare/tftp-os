@@ -135,7 +135,7 @@ These are explicit non-goals. pxe-os or other consumers own them:
 - **No autoinstall templates** -- kickstart, preseed, cloud-init *templates* belong in pxe-os; tftp-os provides raw `CloudInitConfig` generation but not OS-specific installer templates
 - **No DHCP management** -- tftp-os does not configure or manage DHCP servers
 - **No web UI** -- tftp-os is a pure library with no HTTP endpoints or frontend
-- **No REST API** -- FastAPI integration lives in [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos) (web frontend is in the `flossware-tftpos-web/` subdirectory)
+- **No REST API** -- FastAPI integration lives in [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos)
 - **No OS-specific installer logic** -- distro-specific boot workflows belong in pxe-os plugins
 
 ## Extension Points
@@ -238,6 +238,8 @@ firmware path resolution.  Their APIs may change without notice between
 | `tftpos.console` | Serial/VNC/SPICE console proxy |
 | `tftpos.power` | BMC/IPMI/Redfish power control |
 | `tftpos.client.*` | Hypervisor backends (libvirt, bhyve, Hyper-V, VMM) |
+| `tftpos.staging` | TFTP root staging (stage, unstage, list_staged) |
+| `tftpos.plugins.static` | Built-in `StaticFirmwarePlugin` for simple firmware layouts |
 
 ### App-layer modules (candidates for migration)
 

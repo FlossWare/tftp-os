@@ -13,7 +13,7 @@ You need a plugin when:
 - You need custom validation logic (required fields, version constraints, architecture checks)
 - You need to extract firmware from archive files (`.tar.gz`, `.img`, etc.)
 
-tftp-os ships with no built-in firmware plugins. You write them yourself, or use PxeOS's OS plugins if you are doing full PXE boot provisioning.
+tftp-os ships with one built-in plugin, `StaticFirmwarePlugin` (`tftpos.plugins.static`), which resolves firmware paths using a simple `{distro_root}/{os_family}/{os_version}/{filename}` layout. For more complex path logic, write your own plugin or use PxeOS's OS plugins if you are doing full PXE boot provisioning.
 
 ## FirmwarePlugin ABC
 

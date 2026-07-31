@@ -33,11 +33,18 @@ pip install "tftpos[tls,postgres]"
 
 ### Extras reference
 
-| Extra      | Adds              | Purpose                                    |
-|------------|-------------------|--------------------------------------------|
-| `tls`      | `cryptography`    | Self-signed TLS certificate generation     |
-| `postgres` | `psycopg2-binary` | PostgreSQL database backend                |
-| `mysql`    | `pymysql`         | MariaDB / MySQL database backend           |
+| Extra          | Adds              | Purpose                                    |
+|----------------|-------------------|--------------------------------------------|
+| `tls`          | `cryptography`    | Self-signed TLS certificate generation     |
+| `postgres`     | `psycopg2-binary` | PostgreSQL database backend                |
+| `mysql`        | `pymysql`         | MariaDB / MySQL database backend           |
+| `power`        | --                | BMC/IPMI/Redfish power control             |
+| `hypervisor`   | --                | libvirt, bhyve, Hyper-V, VMM backends      |
+| `cloud`        | --                | cloud-init, cloud-image handling           |
+| `cluster`      | --                | cluster provisioning, repo mirrors         |
+| `observability`| --                | metrics, audit, webhooks, console          |
+| `all`          | all of the above  | convenience: every extra                   |
+| `dev`          | pytest, ruff, etc | development and testing tools              |
 
 ### Install from source
 
@@ -282,6 +289,42 @@ subnet 192.168.1.0 netmask 255.255.255.0 {
     filename "pxelinux.0";
 }
 ```
+
+---
+
+## Staging Firmware
+
+tftp-os provides the `tftpos.staging` module to place resolved firmware files
+under `tftp_root` where your TFTP server can serve them.
+
+```python
+from pathlib import Path
+from tftpos.staging import stage, unstage, list_staged
+
+# Stage a firmware file (copies or symlinks into tftp_root)
+staged = stage(
+    firmware_path=Path("/srv/tftpos/distros/openwrt/23.05/firmware.bin"),
+    tftp_root=Path("/srv/tftp"),
+    name="openwrt-23.05.bin",
+    symlink=True,
+)
+
+# List all staged files
+for path in list_staged(Path("/srv/tftp")):
+    print(path)
+
+# Remove a staged file
+unstage(staged)
+```
+
+The `FirmwareEngine.stage()` convenience method combines `serve()` and
+`stage()` in one call:
+
+```python
+staged_path = engine.stage(mac="aa:bb:cc:dd:ee:ff")
+```
+
+Staging uses atomic tmp-then-rename to avoid serving partial files.
 
 ---
 

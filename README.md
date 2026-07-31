@@ -26,7 +26,7 @@ tftp-os works on its own for scenarios where you need to serve firmware to devic
 
 ## Project Status
 
-- **950 tests**, all passing
+- **1023 tests**, all passing
 - **Python 3.10 -- 3.13**
 - **Development Status: Alpha** (Development Status :: 3 - Alpha)
 
@@ -917,7 +917,7 @@ engine = ProvisioningEngine(registry, matcher, config)
 
 - **No production deployment yet** -- use the `tftpos.staging` module (`stage()`, `unstage()`, `list_staged()`) to place resolved firmware under `tftp_root` for an external TFTP daemon; see [#5](https://github.com/FlossWare/tftp-os/issues/5) for end-to-end validation status
 - **No REST API implementation** -- this is intentional; tftp-os is a pure library with no API routes
-- **Plugin ecosystem** -- No built-in firmware plugins ship with tftp-os; you must write your own or use PxeOS's OS plugins ([#4](https://github.com/FlossWare/tftp-os/issues/4))
+- **Plugin ecosystem** -- tftp-os ships `StaticFirmwarePlugin` for simple `{distro_root}/{os_family}/{os_version}/firmware.bin` layouts; for more complex needs, write your own or use PxeOS's OS plugins (see [docs/PLUGIN_GUIDE.md](docs/PLUGIN_GUIDE.md))
 - **IPMI/Redfish** -- Power control shells out to `ipmitool` and makes HTTP requests to Redfish endpoints; not tested against real BMCs
 - **Hypervisor backends** -- Shell out to platform-specific CLI tools; tested with mocks only
 - **Cloud image import** -- Requires `qemu-img` and `wget`/`curl` on the host

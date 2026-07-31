@@ -26,11 +26,12 @@ Core modules (always required for firmware path resolution)::
 
 Extended modules (shipped but not required for basic usage)::
 
-    tftpos.auth, tftpos.tls, tftpos.secrets, tftpos.cache,
-    tftpos.rate_limit, tftpos.named_objects, tftpos.cloud_init,
-    tftpos.cloud_image, tftpos.iso_detect, tftpos.mnemonics,
-    tftpos.repo_mirror, tftpos.cluster, tftpos.console, tftpos.power,
-    tftpos.client.*
+    tftpos.staging, tftpos.plugins.static, tftpos.auth,
+    tftpos.tls, tftpos.secrets, tftpos.cache,
+    tftpos.rate_limit, tftpos.named_objects,
+    tftpos.cloud_init, tftpos.cloud_image, tftpos.iso_detect,
+    tftpos.mnemonics, tftpos.repo_mirror, tftpos.cluster,
+    tftpos.console, tftpos.power, tftpos.client.*
 
 App-layer modules (candidates for migration to flossware-tftpos)::
 
