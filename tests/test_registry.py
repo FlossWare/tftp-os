@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -26,6 +27,25 @@ class _FakePlugin(FirmwarePlugin):
         return "/fake/firmware"
 
 
+class _ConfiguredPlugin(FirmwarePlugin):
+    """Plugin that requires constructor arguments."""
+
+    def __init__(self, root: str, family: str):
+        self._root = root
+        self._family = family
+
+    @property
+    def os_family(self) -> str:
+        return self._family
+
+    @property
+    def supported_versions(self) -> list[str]:
+        return ["1.0"]
+
+    def firmware_path(self, profile) -> str:
+        return f"{self._root}/{profile.os_version}/firmware.bin"
+
+
 # ---------------------------------------------------------------------------
 # register / get
 # ---------------------------------------------------------------------------
@@ -37,6 +57,24 @@ class TestRegisterAndGet:
         registry.register(_FakePlugin)
         plugin = registry.get("fakeos")
         assert isinstance(plugin, _FakePlugin)
+
+    def test_register_instance(self):
+        registry = PluginRegistry()
+        instance = _FakePlugin()
+        registry.register(instance)
+        assert registry.get("fakeos") is instance
+
+    def test_register_class_with_kwargs(self):
+        registry = PluginRegistry()
+        registry.register(_ConfiguredPlugin, root="/srv", family="myos")
+        plugin = registry.get("myos")
+        assert isinstance(plugin, _ConfiguredPlugin)
+        assert plugin.os_family == "myos"
+
+    def test_register_rejects_non_plugin(self):
+        registry = PluginRegistry()
+        with pytest.raises(TypeError, match="expected FirmwarePlugin"):
+            registry.register("not a plugin")
 
     def test_get_unknown_raises_value_error(self):
         registry = PluginRegistry()
@@ -178,9 +216,27 @@ class TestDiscover:
         assert registry.available == []
 
     def test_discover_handles_load_exception(self):
-        """If an entry point fails to load, it should be silently skipped."""
+        """Failed entry point loads are logged, not silently swallowed."""
         mock_ep = MagicMock()
+        mock_ep.name = "broken_plugin"
         mock_ep.load.side_effect = ImportError("broken")
+
+        registry = PluginRegistry()
+
+        import importlib.metadata
+        with patch.object(importlib.metadata, "entry_points", return_value=[mock_ep]):
+            with patch("tftpos.registry.logger") as mock_logger:
+                registry.discover()
+
+        assert registry.available == []
+        mock_logger.warning.assert_called_once()
+        assert "broken_plugin" in str(mock_logger.warning.call_args)
+
+    def test_discover_stores_class_when_instantiation_fails(self):
+        """Plugins requiring config appear in discovered but not available."""
+        mock_ep = MagicMock()
+        mock_ep.name = "configured"
+        mock_ep.load.return_value = _ConfiguredPlugin
 
         registry = PluginRegistry()
 
@@ -189,3 +245,41 @@ class TestDiscover:
             registry.discover()
 
         assert registry.available == []
+        assert "configured" in registry.discovered
+        assert registry.discovered["configured"] is _ConfiguredPlugin
+
+    def test_discover_logs_info_for_config_required(self):
+        """Plugins requiring config log an info message."""
+        mock_ep = MagicMock()
+        mock_ep.name = "configured"
+        mock_ep.load.return_value = _ConfiguredPlugin
+
+        registry = PluginRegistry()
+
+        import importlib.metadata
+        with patch.object(importlib.metadata, "entry_points", return_value=[mock_ep]):
+            with patch("tftpos.registry.logger") as mock_logger:
+                registry.discover()
+
+        mock_logger.info.assert_called_once()
+        assert "configured" in str(mock_logger.info.call_args)
+
+    def test_discover_and_manual_register_flow(self):
+        """Full flow: discover() finds class, user registers with config."""
+        mock_ep = MagicMock()
+        mock_ep.name = "configured"
+        mock_ep.load.return_value = _ConfiguredPlugin
+
+        registry = PluginRegistry()
+
+        import importlib.metadata
+        with patch.object(importlib.metadata, "entry_points", return_value=[mock_ep]):
+            registry.discover()
+
+        assert registry.available == []
+        cls = registry.discovered["configured"]
+        registry.register(cls, root="/srv/tftpboot", family="myos")
+        assert "myos" in registry.available
+        plugin = registry.get("myos")
+        assert isinstance(plugin, _ConfiguredPlugin)
+        assert plugin.os_family == "myos"

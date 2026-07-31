@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from tftpos.plugins.base import FirmwarePlugin
 from tftpos.staging import (
     list_staged,
     stage,
@@ -329,15 +330,13 @@ class TestEngineStage:
         fw = _create_firmware(tmp_path, "openwrt-23.05.bin")
 
         # Mock plugin that returns the firmware path
-        plugin = MagicMock()
+        plugin = MagicMock(spec=FirmwarePlugin)
         plugin.os_family = "openwrt"
         plugin.validate_profile.return_value = []
         plugin.firmware_path.return_value = str(fw)
 
         registry = PluginRegistry()
-        # Directly insert the mock into both internal dicts
-        registry._plugins["openwrt"] = MagicMock
-        registry._instances["openwrt"] = plugin
+        registry.register(plugin)
 
         rules = [
             HostRule(
