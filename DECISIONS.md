@@ -73,3 +73,24 @@ AI-assisted decisions with full model/API traceability.
 
 **Consensus:** 3/3 agreed on logging errors instead of silent swallow; 3/3 agreed register API must change
 **Implementation:** `discover()` stores classes in `discovered` dict, tries zero-arg instantiation for backward compat, logs info when config needed. `register()` accepts `FirmwarePlugin` instances or subclasses with `**kwargs`.
+
+---
+
+## 2026-07-30: Optional extras — honest docs over real isolation
+
+**Issue:** [#48](https://github.com/FlossWare/tftp-os/issues/48)
+**Decision:** Update README to be transparent that module extras are documentation-only markers; all modules always ship with `pip install tftpos`
+**Alternatives considered:** Real isolation via lazy imports or namespace packages
+
+**Workers:**
+
+| Model | Provider | Key Type | Recommendation |
+|-------|----------|----------|---------------|
+| llama-3.3-70b-versatile | Groq | Personal | Option A — honest docs, avoid premature complexity |
+| command-r-08-2024 | Cohere | Personal | Option A — transparency and clarity, reduced maintenance |
+| llama-3.1-70b-instruct | Cloudflare | Personal | Option A — focus on core development, reconsider at 1.0 |
+
+**Arbiter:** gpt-oss-120b (Cerebras, Personal)
+
+**Consensus:** 3/3 unanimous for Option A
+**Rationale:** Alpha library should prioritize transparency over packaging complexity. The extras (`power`, `hypervisor`, `cloud`, `cluster`, `observability`) carry no pip dependencies today and exist as documentation-only markers. Real isolation deferred to 1.0 or when external deps are added.

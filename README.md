@@ -6,16 +6,16 @@ TFTP-based firmware provisioning library with optional extras for power control,
 
 tftp-os is a firmware provisioning library. Its core mission is simple: given a device's MAC address (or hostname, subnet, serial number, or group), resolve which firmware file to serve.
 
-Beyond the core, tftp-os ships optional extras for common provisioning workflows: BMC power control, hypervisor backends (libvirt, bhyve, Hyper-V, VMM), cloud-init config generation, cloud image management, cluster provisioning, audit logging, Prometheus metrics, webhooks, console access, and RBAC. Install only what you need:
+Beyond the core, tftp-os ships modules for common provisioning workflows: BMC power control, hypervisor backends (libvirt, bhyve, Hyper-V, VMM), cloud-init config generation, cloud image management, cluster provisioning, audit logging, Prometheus metrics, webhooks, console access, and RBAC.
+
+> **Note:** All modules ship with every install. The optional extras in `pyproject.toml` are documentation-only markers that group modules by feature area. They carry no additional pip dependencies today but provide a hook for adding external requirements in the future. See [docs/SCOPE.md](docs/SCOPE.md) for details.
 
 ```bash
-pip install tftpos                # core: MAC -> firmware path
-pip install tftpos[power]         # + BMC/IPMI/Redfish power control
-pip install tftpos[hypervisor]    # + libvirt, bhyve, Hyper-V, vmm backends
-pip install tftpos[cloud]         # + cloud-init, cloud-image handling
-pip install tftpos[cluster]       # + cluster provisioning, repo mirrors
-pip install tftpos[observability] # + metrics, audit, webhooks, console
-pip install tftpos[all]           # everything (includes tls, postgres, mysql)
+pip install tftpos                # all modules included
+pip install tftpos[tls]           # + cryptography (TLS cert generation)
+pip install tftpos[postgres]      # + psycopg2 (PostgreSQL backend)
+pip install tftpos[mysql]         # + pymysql (MySQL/MariaDB backend)
+pip install tftpos[all]           # all external deps (tls, postgres, mysql)
 ```
 
 tftp-os is a **reusable library** -- it contains no CLI, no REST API routes, and no UI. It is designed as a foundation that anyone can build on. See [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos) for a reference application with desktop, mobile, and web frontends.
@@ -26,11 +26,11 @@ tftp-os works on its own for scenarios where you need to serve firmware to devic
 
 ## Project Status
 
-- **1023 tests**, all passing
+- **1017 tests**, all passing
 - **Python 3.10 -- 3.13**
 - **Development Status: Alpha** (Development Status :: 3 - Alpha)
 
-> **tftp-os is alpha software.** It has been extracted from PxeOS and has not been deployed in a production environment. The test suite validates logic correctness, but no real-world TFTP serving has been performed. See [Known Limitations](#known-limitations) for details.
+> **tftp-os is alpha software.** It has been extracted from PxeOS and has not been deployed in a production environment. The test suite validates logic correctness; a lab proof (`test_lab_tftp.py`) demonstrates the full MAC → stage → TFTP transfer → checksum verify loop using tftpy. See [Known Limitations](#known-limitations) for details.
 
 ## Quick Start
 
@@ -88,30 +88,40 @@ EOF
 from tftpos.config import load_config, load_hosts
 from tftpos.engine import FirmwareEngine
 from tftpos.matcher import HostMatcher
+from tftpos.plugins.static import StaticFirmwarePlugin
 from tftpos.registry import PluginRegistry
 
 # Load configuration
 config = load_config(Path("/etc/tftpos/tftpos.toml"))
 rules = load_hosts(Path("/etc/tftpos/hosts.toml"))
 
-# Build the engine
+# Build the engine with the built-in StaticFirmwarePlugin
 registry = PluginRegistry()
-registry.load_builtins(["my_plugins.openwrt"])
+registry.register(
+    StaticFirmwarePlugin,
+    distro_root="/srv/tftpos/distros",
+    os_family="openwrt",
+    supported_versions=["23.05"],
+)
 matcher = HostMatcher(rules)
 engine = FirmwareEngine(registry, matcher, config)
 
 # Resolve a MAC to its firmware file
 firmware_path = engine.serve(mac="aa:bb:cc:dd:ee:ff")
+
+# Stage the firmware under tftp_root for an external TFTP server
+staged_path = engine.stage(mac="aa:bb:cc:dd:ee:ff")
 ```
 
 ## Integration with TFTP servers
 
-tftp-os resolves firmware paths — it does not speak the TFTP protocol.
+tftp-os resolves firmware paths and stages files — it does not speak the TFTP protocol.
 Pair it with any TFTP server (dnsmasq, tftpd-hpa, atftpd):
 
-1. tftp-os resolves MAC → firmware file path
-2. Your TFTP server serves that file to the device
-3. tftp-os tracks provisioning state
+1. tftp-os resolves MAC → firmware file path via `engine.serve()`
+2. `engine.stage()` copies/links the firmware into `tftp_root`
+3. Your TFTP server serves files from `tftp_root` to the device
+4. tftp-os tracks provisioning state
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for TFTP server setup.
 
@@ -915,7 +925,7 @@ engine = ProvisioningEngine(registry, matcher, config)
 
 ## Known Limitations
 
-- **No production deployment yet** -- use the `tftpos.staging` module (`stage()`, `unstage()`, `list_staged()`) to place resolved firmware under `tftp_root` for an external TFTP daemon; see [#5](https://github.com/FlossWare/tftp-os/issues/5) for end-to-end validation status
+- **No production deployment yet** -- use the `tftpos.staging` module (`stage()`, `unstage()`, `list_staged()`) or `engine.stage()` to place resolved firmware under `tftp_root` for an external TFTP daemon; lab proof in `test_lab_tftp.py` demonstrates the full loop via tftpy
 - **No REST API implementation** -- this is intentional; tftp-os is a pure library with no API routes
 - **Plugin ecosystem** -- tftp-os ships `StaticFirmwarePlugin` for simple `{distro_root}/{os_family}/{os_version}/firmware.bin` layouts; for more complex needs, write your own or use PxeOS's OS plugins (see [docs/PLUGIN_GUIDE.md](docs/PLUGIN_GUIDE.md))
 - **IPMI/Redfish** -- Power control shells out to `ipmitool` and makes HTTP requests to Redfish endpoints; not tested against real BMCs
@@ -940,22 +950,22 @@ engine = ProvisioningEngine(registry, matcher, config)
 ### Optional dependency groups
 
 ```bash
-# External dependencies
+# External dependencies (these pull in additional pip packages)
 pip install tftpos[tls]           # cryptography (TLS cert generation)
 pip install tftpos[postgres]      # psycopg2 (PostgreSQL)
 pip install tftpos[mysql]         # pymysql (MySQL/MariaDB)
-
-# Extended module groups (no additional pip deps; markers only today)
-pip install tftpos[power]         # BMC/IPMI/Redfish power control
-pip install tftpos[hypervisor]    # libvirt, bhyve, Hyper-V, vmm backends
-pip install tftpos[cloud]         # cloud-init, cloud-image handling
-pip install tftpos[cluster]       # cluster provisioning, repo mirrors
-pip install tftpos[observability] # metrics, audit, webhooks, console
+pip install tftpos[test-tftp]     # tftpy (lab integration tests)
 
 # Convenience
-pip install tftpos[all]           # all of the above (includes tls, postgres, mysql)
+pip install tftpos[all]           # all external deps (tls, postgres, mysql)
 pip install tftpos[dev]           # pytest, ruff, mypy, bandit, coverage
 ```
+
+> The `power`, `hypervisor`, `cloud`, `cluster`, and `observability` extras
+> are documentation-only markers — they carry no additional pip dependencies
+> and all modules ship with every install. They exist to document which
+> feature areas exist and to provide a hook for future external requirements.
+> See [docs/SCOPE.md](docs/SCOPE.md) for the full module classification.
 
 ## Development
 
