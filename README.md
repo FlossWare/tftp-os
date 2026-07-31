@@ -26,7 +26,7 @@ tftp-os works on its own for scenarios where you need to serve firmware to devic
 
 ## Project Status
 
-- **1038 tests**, all passing
+- **1072 tests**, all passing
 - **Python 3.10 -- 3.13**
 - **Development Status: Alpha** (Development Status :: 3 - Alpha)
 
@@ -330,23 +330,23 @@ from tftpos.plugins.base import FirmwarePlugin
 from tftpos.models import ProvisionProfile
 
 
-class OpenWRTPlugin(FirmwarePlugin):
+class MyFirmwarePlugin(FirmwarePlugin):
 
     @property
     def os_family(self) -> str:
-        return "openwrt"
+        return "mybrand"
 
     @property
     def supported_versions(self) -> list[str]:
-        return ["23.05", "23.05.5", "24.10"]
+        return ["1.0", "2.0"]
 
     def firmware_path(self, profile: ProvisionProfile) -> str:
-        return f"/srv/tftpos/distros/openwrt/{profile.os_version}/firmware.bin"
+        return f"/srv/firmware/mybrand/{profile.os_version}/firmware.bin"
 
     def validate_profile(self, profile: ProvisionProfile) -> list[str]:
         errors = super().validate_profile(profile)
         if not profile.install_url:
-            errors.append("install_url is required for OpenWRT")
+            errors.append("install_url is required")
         return errors
 ```
 
@@ -357,7 +357,7 @@ class OpenWRTPlugin(FirmwarePlugin):
 ```toml
 # In your package's pyproject.toml
 [project.entry-points."tftpos.plugins"]
-openwrt = "my_plugins.openwrt:OpenWRTPlugin"
+mybrand = "my_plugins.mybrand:MyFirmwarePlugin"
 ```
 
 **Manual registration** (instance or class with kwargs):
@@ -366,7 +366,7 @@ openwrt = "my_plugins.openwrt:OpenWRTPlugin"
 registry = PluginRegistry()
 
 # Zero-arg plugins
-registry.register(OpenWRTPlugin)
+registry.register(MyFirmwarePlugin)
 
 # Plugins requiring constructor args (e.g. StaticFirmwarePlugin)
 registry.register(
@@ -381,7 +381,7 @@ registry.register(
 
 ```python
 registry = PluginRegistry()
-registry.load_builtins(["my_plugins.openwrt", "my_plugins.ddwrt"])
+registry.load_builtins(["my_plugins.mybrand", "my_plugins.ddwrt"])
 ```
 
 See [docs/PLUGIN_GUIDE.md](docs/PLUGIN_GUIDE.md) for a complete tutorial.

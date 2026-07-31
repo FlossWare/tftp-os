@@ -34,6 +34,7 @@ tests/
   test_cloud_image.py     - Image import, convert, resize, list
   test_cloud_init.py      - Cloud-init config generation
   test_cluster.py         - ClusterManager, ordered provisioning
+  test_config.py          - Configuration loading, defaults, forward-compatibility
   test_db.py              - StorageBackend implementations
   test_engine.py          - FirmwareEngine serve, stage, resolve, profiles
   test_e2e_vm_boot.py     - E2E VM PXE boot (integration, 15 tests)
@@ -57,7 +58,7 @@ tests/
   test_webhooks.py        - WebhookManager, HMAC signatures
 ```
 
-28 test files, 1061 tests total (1052 unit + 6 registry + 3 lab-tftp integration).
+29 test files, 1072 tests total.
 
 ## Coverage
 

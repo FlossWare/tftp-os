@@ -13,7 +13,7 @@ You need a plugin when:
 - You need custom validation logic (required fields, version constraints, architecture checks)
 - You need to extract firmware from archive files (`.tar.gz`, `.img`, etc.)
 
-tftp-os ships with one built-in plugin, `StaticFirmwarePlugin` (`tftpos.plugins.static`), which resolves firmware paths using a simple `{distro_root}/{os_family}/{os_version}/{filename}` layout. For more complex path logic, write your own plugin or use PxeOS's OS plugins if you are doing full PXE boot provisioning.
+tftp-os ships with two built-in plugins: `StaticFirmwarePlugin` (`tftpos.plugins.static`) for simple `{distro_root}/{os_family}/{os_version}/{filename}` layouts, and `OpenWrtPlugin` (`tftpos.plugins.openwrt`) for OpenWRT target/subtarget directory trees. For other path logic, write your own plugin or use PxeOS's OS plugins if you are doing full PXE boot provisioning.
 
 ## FirmwarePlugin ABC
 
@@ -82,12 +82,36 @@ Renders a Jinja2 template from the `tftpos/templates/` directory. The environmen
 
 Sanitizes template context values before rendering. Validates `hostname` against RFC 952/1123, validates `install_url` against allowed URL schemes (`http`, `https`, `ftp`, `nfs`, `tftp`), and validates `packages` entries against a safe package name pattern. Raises `ValueError` on invalid input. Call this before `_render_template()` if your context includes user-supplied values.
 
-## Step-by-Step: OpenWRT Plugin
+## Built-in: OpenWRT Plugin
 
-A complete working plugin for serving OpenWRT firmware images.
+tftp-os ships `OpenWrtPlugin` (`tftpos.plugins.openwrt`) which handles the
+standard OpenWRT target directory layout:
+
+    {distro_root}/openwrt/{version}/targets/{target}/{subtarget}/{filename}
 
 ```python
-"""OpenWRT firmware plugin for TftpOS."""
+from tftpos.plugins.openwrt import OpenWrtPlugin
+from tftpos.registry import PluginRegistry
+
+registry = PluginRegistry()
+registry.register(
+    OpenWrtPlugin,
+    distro_root="/srv/tftpos/distros",
+    supported_versions=["23.05", "24.10"],
+)
+```
+
+The `arch` field encodes target and subtarget as `{target}-{subtarget}`
+(e.g. `"ath79-generic"`).  Filename defaults to `sysupgrade.bin` but can
+be overridden per-profile via `extra["filename"]`.
+
+## Step-by-Step: Custom Plugin Example
+
+A complete working plugin for a custom firmware layout (e.g. an internal
+build system with its own directory conventions).
+
+```python
+"""Custom firmware plugin for TftpOS."""
 
 from pathlib import Path
 
@@ -95,30 +119,26 @@ from tftpos.models import DistroAssets, ProvisionProfile
 from tftpos.plugins.base import FirmwarePlugin
 
 
-class OpenWRTPlugin(FirmwarePlugin):
+class MyFirmwarePlugin(FirmwarePlugin):
 
-    # OpenWRT organizes firmware by release version and target architecture.
     # Example layout on disk:
-    #   /srv/tftpos/distros/openwrt/23.05/x86_64/firmware.bin
-    #   /srv/tftpos/distros/openwrt/24.10/aarch64/firmware.bin
+    #   /srv/firmware/mybrand/1.0/x86_64/firmware.bin
+    #   /srv/firmware/mybrand/2.0/aarch64/firmware.bin
 
-    DISTRO_ROOT = "/srv/tftpos/distros"
+    DISTRO_ROOT = "/srv/firmware"
 
     @property
     def os_family(self) -> str:
-        return "openwrt"
+        return "mybrand"
 
     @property
     def supported_versions(self) -> list[str]:
-        return ["23.05", "23.05.5", "24.10"]
+        return ["1.0", "2.0"]
 
     def firmware_path(self, profile: ProvisionProfile) -> str:
-        # Build the path from version and architecture.
-        # The 'extra' dict can override the filename if a profile
-        # needs a non-default image (e.g. sysupgrade vs factory).
         filename = profile.extra.get("firmware_filename", "firmware.bin")
         return (
-            f"{self.DISTRO_ROOT}/openwrt/"
+            f"{self.DISTRO_ROOT}/mybrand/"
             f"{profile.os_version}/{profile.arch}/{filename}"
         )
 
@@ -247,7 +267,7 @@ Add an entry point in your package's `pyproject.toml`:
 
 ```toml
 [project.entry-points."tftpos.plugins"]
-openwrt = "my_plugins.openwrt:OpenWRTPlugin"
+mybrand = "my_plugins.mybrand:MyFirmwarePlugin"
 ddwrt = "my_plugins.ddwrt:DDWRTPlugin"
 ```
 
@@ -259,7 +279,7 @@ from tftpos.registry import PluginRegistry
 registry = PluginRegistry()
 registry.discover()  # Finds all tftpos.plugins entry points
 
-plugin = registry.get("openwrt")
+plugin = registry.get("mybrand")
 ```
 
 The entry point group must be `tftpos.plugins`. The key (left side) is arbitrary -- the registry uses the plugin's `os_family` property as the actual lookup key.
@@ -272,7 +292,7 @@ Pass a list of module names containing `FirmwarePlugin` subclasses:
 
 ```python
 registry = PluginRegistry()
-registry.load_builtins(["my_plugins.openwrt", "my_plugins.ddwrt"])
+registry.load_builtins(["my_plugins.mybrand", "my_plugins.ddwrt"])
 ```
 
 `load_builtins()` imports each module, scans it for concrete `FirmwarePlugin` subclasses (skips abstract classes), and registers them. Import failures are silently skipped.
@@ -284,10 +304,10 @@ This is the simplest approach when your plugins live in the same codebase and ar
 Register a specific class directly:
 
 ```python
-from my_plugins.openwrt import OpenWRTPlugin
+from my_plugins.mybrand import MyFirmwarePlugin
 
 registry = PluginRegistry()
-registry.register(OpenWRTPlugin)
+registry.register(MyFirmwarePlugin)
 ```
 
 `register()` instantiates the class and stores it by `os_family.lower()`. If you register two plugins with the same `os_family`, the second replaces the first.
@@ -296,13 +316,13 @@ registry.register(OpenWRTPlugin)
 
 ```python
 print(registry.available)
-# ['ddwrt', 'openwrt']  -- sorted list of os_family keys
+# ['ddwrt', 'mybrand']  -- sorted list of os_family keys
 
-plugin = registry.get("openwrt")
-# Returns the OpenWRTPlugin instance, or raises ValueError
+plugin = registry.get("mybrand")
+# Returns the MyFirmwarePlugin instance, or raises ValueError
 ```
 
-`get()` is case-insensitive: `registry.get("OpenWRT")` works the same as `registry.get("openwrt")`.
+`get()` is case-insensitive: `registry.get("MyBrand")` works the same as `registry.get("mybrand")`.
 
 ## Template Rendering
 
@@ -395,7 +415,7 @@ Each error is a plain string describing what is wrong. The engine collects all e
 ### Calling validation
 
 ```python
-plugin = registry.get("openwrt")
+plugin = registry.get("mybrand")
 errors = plugin.validate_profile(profile)
 if errors:
     for err in errors:
@@ -453,7 +473,7 @@ If your firmware does not ship in archives, leave the default implementation alo
 A pytest example covering the main plugin behaviors.
 
 ```python
-"""Tests for the OpenWRT firmware plugin."""
+"""Tests for the MyFirmwarePlugin custom plugin."""
 
 import pytest
 
@@ -462,102 +482,102 @@ from tftpos.plugins.base import FirmwarePlugin
 from tftpos.registry import PluginRegistry
 
 # Import your plugin.
-from my_plugins.openwrt import OpenWRTPlugin
+from my_plugins.mybrand import MyFirmwarePlugin
 
 
-class TestOpenWRTPlugin:
+class TestMyFirmwarePlugin:
 
     def test_os_family(self):
-        plugin = OpenWRTPlugin()
-        assert plugin.os_family == "openwrt"
+        plugin = MyFirmwarePlugin()
+        assert plugin.os_family == "mybrand"
 
     def test_supported_versions(self):
-        plugin = OpenWRTPlugin()
-        assert "23.05" in plugin.supported_versions
-        assert "24.10" in plugin.supported_versions
+        plugin = MyFirmwarePlugin()
+        assert "1.0" in plugin.supported_versions
+        assert "2.0" in plugin.supported_versions
 
     def test_firmware_path_default(self):
-        plugin = OpenWRTPlugin()
+        plugin = MyFirmwarePlugin()
         profile = ProvisionProfile(
-            name="router-01",
-            os_family="openwrt",
-            os_version="23.05",
+            name="device-01",
+            os_family="mybrand",
+            os_version="1.0",
             arch="x86_64",
-            install_url="https://downloads.openwrt.org/releases/23.05.5/",
+            install_url="https://firmware.example.com/mybrand/1.0/",
         )
         path = plugin.firmware_path(profile)
         assert path == (
-            "/srv/tftpos/distros/openwrt/23.05/x86_64/firmware.bin"
+            "/srv/firmware/mybrand/1.0/x86_64/firmware.bin"
         )
 
     def test_firmware_path_custom_filename(self):
-        plugin = OpenWRTPlugin()
+        plugin = MyFirmwarePlugin()
         profile = ProvisionProfile(
-            name="router-02",
-            os_family="openwrt",
-            os_version="24.10",
+            name="device-02",
+            os_family="mybrand",
+            os_version="2.0",
             arch="aarch64",
-            install_url="https://downloads.openwrt.org/releases/24.10/",
-            extra={"firmware_filename": "sysupgrade.bin"},
+            install_url="https://firmware.example.com/mybrand/2.0/",
+            extra={"firmware_filename": "upgrade.bin"},
         )
         path = plugin.firmware_path(profile)
-        assert "sysupgrade.bin" in path
+        assert "upgrade.bin" in path
 
     def test_validate_profile_valid(self):
-        plugin = OpenWRTPlugin()
+        plugin = MyFirmwarePlugin()
         profile = ProvisionProfile(
-            name="router-01",
-            os_family="openwrt",
-            os_version="23.05",
+            name="device-01",
+            os_family="mybrand",
+            os_version="1.0",
             arch="x86_64",
-            install_url="https://downloads.openwrt.org/releases/23.05.5/",
+            install_url="https://firmware.example.com/mybrand/1.0/",
         )
         errors = plugin.validate_profile(profile)
         assert errors == []
 
     def test_validate_profile_missing_install_url(self):
-        plugin = OpenWRTPlugin()
+        plugin = MyFirmwarePlugin()
         profile = ProvisionProfile(
-            name="router-01",
-            os_family="openwrt",
-            os_version="23.05",
+            name="device-01",
+            os_family="mybrand",
+            os_version="1.0",
             arch="x86_64",
         )
         errors = plugin.validate_profile(profile)
         assert any("install_url" in e for e in errors)
 
     def test_validate_profile_bad_version(self):
-        plugin = OpenWRTPlugin()
+        plugin = MyFirmwarePlugin()
         profile = ProvisionProfile(
-            name="router-01",
-            os_family="openwrt",
-            os_version="19.07",
+            name="device-01",
+            os_family="mybrand",
+            os_version="0.1",
             arch="x86_64",
-            install_url="https://downloads.openwrt.org/",
+            install_url="https://firmware.example.com/",
         )
         errors = plugin.validate_profile(profile)
         assert any("unsupported version" in e for e in errors)
 
     def test_validate_profile_wrong_os_family(self):
-        plugin = OpenWRTPlugin()
+        plugin = MyFirmwarePlugin()
         profile = ProvisionProfile(
-            name="router-01",
+            name="device-01",
             os_family="ddwrt",
-            os_version="23.05",
+            os_version="1.0",
             arch="x86_64",
-            install_url="https://downloads.openwrt.org/",
+            install_url="https://firmware.example.com/",
         )
         errors = plugin.validate_profile(profile)
         assert any("os_family mismatch" in e for e in errors)
 
     def test_validate_profile_bad_arch(self):
-        plugin = OpenWRTPlugin()
+        plugin = MyFirmwarePlugin()
         profile = ProvisionProfile(
-            name="router-01",
-            os_family="openwrt",
-            os_version="23.05",
+            name="device-01",
+            os_family="mybrand",
+            os_version="1.0",
             arch="sparc64",
-            install_url="https://downloads.openwrt.org/",
+            install_url="https://firmware.example.com/",
         )
         errors = plugin.validate_profile(profile)
         assert any("unsupported arch" in e for e in errors)
@@ -567,15 +587,15 @@ class TestPluginRegistration:
 
     def test_register_and_lookup(self):
         registry = PluginRegistry()
-        registry.register(OpenWRTPlugin)
-        assert "openwrt" in registry.available
-        plugin = registry.get("openwrt")
-        assert isinstance(plugin, OpenWRTPlugin)
+        registry.register(MyFirmwarePlugin)
+        assert "mybrand" in registry.available
+        plugin = registry.get("mybrand")
+        assert isinstance(plugin, MyFirmwarePlugin)
 
     def test_case_insensitive_lookup(self):
         registry = PluginRegistry()
-        registry.register(OpenWRTPlugin)
-        assert registry.get("openwrt") is registry.get("OpenWRT")
+        registry.register(MyFirmwarePlugin)
+        assert registry.get("mybrand") is registry.get("MyBrand")
 
     def test_unknown_os_family_raises(self):
         registry = PluginRegistry()
@@ -583,13 +603,13 @@ class TestPluginRegistration:
             registry.get("nonexistent")
 
     def test_is_firmware_plugin_subclass(self):
-        assert issubclass(OpenWRTPlugin, FirmwarePlugin)
+        assert issubclass(MyFirmwarePlugin, FirmwarePlugin)
 ```
 
 Run with:
 
 ```bash
-pytest tests/test_openwrt_plugin.py -v
+pytest tests/test_mybrand_plugin.py -v
 ```
 
 ## FirmwarePlugin vs OSPlugin
