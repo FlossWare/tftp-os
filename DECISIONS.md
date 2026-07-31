@@ -44,3 +44,32 @@ AI-assisted decisions with full model/API traceability.
 **Rationale:** Multiple languages (Python, Java, Kotlin, Swift), multiple build systems (setuptools, Maven, Gradle, Swift PM), multiple platforms (desktop, mobile, terminal) — same pattern that justified the nexus-java split.
 
 **Orchestrator:** Claude opus-4-6
+
+---
+
+## 2026-07-30: Plugin discovery — lazy class registration
+
+**Issue:** [#44](https://github.com/FlossWare/tftp-os/issues/44)
+**Decision:** `discover()` loads classes but never instantiates; `register()` accepts both instances and classes with `**kwargs`
+**Alternatives considered:** Factory-only pattern (Worker 1), default-arg plugin (Grok Option 2), `**kwargs` on register only (Worker 3)
+
+**Workers:**
+
+| Model | Provider | Key Type | Recommendation |
+|-------|----------|----------|---------------|
+| llama-3.3-70b-versatile | Groq | Personal | Factory pattern — entry points point to factories |
+| gemma-4-31b | Cerebras | Personal | Hybrid — lazy class registration + optional factories |
+| command-r-08-2024 | Cohere | Personal | Change register API — add `**kwargs` |
+
+**Arbiter:** gpt-oss-120b (Cerebras, Personal)
+
+**Arbiter decisions:**
+
+| Worker proposal | Verdict | Rationale |
+|----------------|---------|-----------|
+| Factory pattern (Worker 1) | Partially accepted | Factory support accepted; `config` arg on `discover()` rejected — forces all callers to supply dict even for listing |
+| Lazy class registration (Worker 2) | Accepted | Core of the synthesis — separates discovery from instantiation |
+| `**kwargs` on register (Worker 3) | Partially accepted | `**kwargs` accepted; embedding args in entry-point string rejected — not supported by `importlib.metadata` |
+
+**Consensus:** 3/3 agreed on logging errors instead of silent swallow; 3/3 agreed register API must change
+**Implementation:** `discover()` stores classes in `discovered` dict, tries zero-arg instantiation for backward compat, logs info when config needed. `register()` accepts `FirmwarePlugin` instances or subclasses with `**kwargs`.
