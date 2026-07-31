@@ -23,10 +23,11 @@ Core modules (always required for firmware path resolution)::
                            JSONBackend, MemoryBackend
     tftpos.validation   -- input validation and sanitization helpers
     tftpos.logging_config -- logging setup used by core modules
+    tftpos.staging      -- stage, unstage, list_staged (tftp_root management)
 
 Extended modules (shipped but not required for basic usage)::
 
-    tftpos.staging, tftpos.plugins.static, tftpos.auth,
+    tftpos.plugins.static, tftpos.auth,
     tftpos.tls, tftpos.secrets, tftpos.cache,
     tftpos.rate_limit, tftpos.named_objects,
     tftpos.cloud_init, tftpos.cloud_image, tftpos.iso_detect,
@@ -58,5 +59,6 @@ __all__ = [
     "db",
     "validation",
     "logging_config",
+    "staging",
     "plugins",
 ]

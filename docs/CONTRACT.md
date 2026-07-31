@@ -214,6 +214,7 @@ documented in the changelog and reflected in the version number.
 | `tftpos.db` | `StorageBackend`, `SQLAlchemyBackend`, `SQLiteBackend`, `JSONBackend`, `MemoryBackend` |
 | `tftpos.validation` | input validation and sanitization helpers |
 | `tftpos.logging_config` | logging setup used by core modules |
+| `tftpos.staging` | `stage`, `unstage`, `list_staged` (tftp_root management) |
 
 ### Extended modules (shipped, not part of the stable surface)
 
@@ -238,7 +239,6 @@ firmware path resolution.  Their APIs may change without notice between
 | `tftpos.console` | Serial/VNC/SPICE console proxy |
 | `tftpos.power` | BMC/IPMI/Redfish power control |
 | `tftpos.client.*` | Hypervisor backends (libvirt, bhyve, Hyper-V, VMM) |
-| `tftpos.staging` | TFTP root staging (stage, unstage, list_staged) |
 | `tftpos.plugins.static` | Built-in `StaticFirmwarePlugin` for simple firmware layouts |
 
 ### App-layer modules (candidates for migration)

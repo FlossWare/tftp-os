@@ -106,7 +106,7 @@ class TestRegisterAndGet:
 class TestLoadBuiltins:
 
     def test_load_builtins_returns_empty(self):
-        """TftpOS has no builtin plugins; load_builtins should be a no-op."""
+        """load_builtins() with no args registers nothing."""
         registry = PluginRegistry()
         registry.load_builtins()
         assert registry.available == []

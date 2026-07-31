@@ -26,7 +26,7 @@ tftp-os works on its own for scenarios where you need to serve firmware to devic
 
 ## Project Status
 
-- **1017 tests**, all passing
+- **1038 tests**, all passing
 - **Python 3.10 -- 3.13**
 - **Development Status: Alpha** (Development Status :: 3 - Alpha)
 
@@ -360,18 +360,28 @@ class OpenWRTPlugin(FirmwarePlugin):
 openwrt = "my_plugins.openwrt:OpenWRTPlugin"
 ```
 
-**Via `load_builtins()`** (for local plugins):
+**Manual registration** (instance or class with kwargs):
+
+```python
+registry = PluginRegistry()
+
+# Zero-arg plugins
+registry.register(OpenWRTPlugin)
+
+# Plugins requiring constructor args (e.g. StaticFirmwarePlugin)
+registry.register(
+    StaticFirmwarePlugin,
+    distro_root="/srv/tftpos/distros",
+    os_family="openwrt",
+    supported_versions=["23.05"],
+)
+```
+
+**Via `load_builtins()`** (for local module paths):
 
 ```python
 registry = PluginRegistry()
 registry.load_builtins(["my_plugins.openwrt", "my_plugins.ddwrt"])
-```
-
-**Manual registration:**
-
-```python
-registry = PluginRegistry()
-registry.register(OpenWRTPlugin)
 ```
 
 See [docs/PLUGIN_GUIDE.md](docs/PLUGIN_GUIDE.md) for a complete tutorial.

@@ -45,6 +45,7 @@ address to a firmware path, manage plugins, and track provisioning state.
 | `errors.py` | Error types used across the library |
 | `validation.py` | Input validation and sanitization |
 | `logging_config.py` | Logging setup (used by core modules) |
+| `staging.py` | TFTP root staging (stage/unstage/list_staged) |
 
 **Rationale:** All three models agreed that errors.py and validation.py are
 core. The remaining modules in this list (engine, matcher, registry, config,
@@ -88,7 +89,6 @@ external packages (cryptography, psycopg2, pymysql respectively).
 | `cluster.py` | Multi-host ordered provisioning | 3/3 EXTENDED | `cluster` |
 | `console.py` | Serial/VNC/SPICE console proxy | 3/3 EXTENDED | `observability` |
 | `power.py` | BMC/IPMI/Redfish power control | 3/3 EXTENDED | `power` |
-| `staging.py` | TFTP root staging (stage/unstage/list_staged) | -- | always installed |
 | `plugins/static.py` | Built-in `StaticFirmwarePlugin` | -- | always installed |
 
 ### Hypervisor Backends (`hypervisor` extra)

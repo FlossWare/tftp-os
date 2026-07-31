@@ -94,3 +94,24 @@ AI-assisted decisions with full model/API traceability.
 
 **Consensus:** 3/3 unanimous for Option A
 **Rationale:** Alpha library should prioritize transparency over packaging complexity. The extras (`power`, `hypervisor`, `cloud`, `cluster`, `observability`) carry no pip dependencies today and exist as documentation-only markers. Real isolation deferred to 1.0 or when external deps are added.
+
+---
+
+## 2026-07-30: Promote staging to core stable API
+
+**Issue:** [#58](https://github.com/FlossWare/tftp-os/issues/58)
+**Decision:** Promote `tftpos.staging` and `FirmwareEngine.stage()` from extended to core stable API
+**Alternatives considered:** Keep staging as extended and reposition project as firmware-path-resolver only
+
+**Workers:**
+
+| Model | Provider | Key Type | Recommendation |
+|-------|----------|----------|---------------|
+| llama-3.1-70b-instruct | Cloudflare | Personal | Option A — staging integral to TFTP operations |
+| llama-3.3-70b-instruct-fp8 | Cloudflare | Personal | Option A — directly related to project purpose |
+| gemma-7b-it | Cloudflare | Personal | Option A — makes library more accessible |
+
+**Arbiter:** llama-3.1-70b-instruct (Cloudflare, Personal)
+
+**Consensus:** 3/3 unanimous for Option A
+**Rationale:** The project name is "tftp-os" — without staging, the library only returns a path string and doesn't deliver on its TFTP promise. Staging is the product path: resolve → stage → external TFTP daemon serves. Promoted to core in `__all__`, CONTRACT.md, and SCOPE.md.
