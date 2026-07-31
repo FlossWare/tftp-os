@@ -402,7 +402,7 @@ running and that the expected file exists and is readable under `/srv/tftp/`.
 
 tftp-os is a library only. For a deployable application with web, desktop, and
 mobile frontends, see
-[flossware-tftpos](https://github.com/FlossWare/flossware-tftpos). That
+[flossware-tftp-os](https://github.com/FlossWare/flossware-tftp-os). That
 repository includes systemd service configuration, reverse proxy setup, and
 full application deployment instructions.
 

@@ -54,7 +54,7 @@ Keys are stored as SHA-256 hashes in `<data_dir>/auth_keys.json`. Raw keys are n
 
 ### FastAPI integration
 
-tftp-os is a pure library and does not include FastAPI glue code. The `require_role()` dependency and `RateLimitMiddleware` live in the separate [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos) application repository (web frontend is in the `flossware-tftpos-web/` subdirectory). See that project for FastAPI auth examples.
+tftp-os is a pure library and does not include FastAPI glue code. The `require_role()` dependency and `RateLimitMiddleware` live in the separate [flossware-tftp-os](https://github.com/FlossWare/flossware-tftp-os) application repository (web frontend is in the `flossware-tftp-os-web/` subdirectory). See that project for FastAPI auth examples.
 
 ## Rate Limiting
 

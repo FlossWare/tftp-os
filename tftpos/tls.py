@@ -2,7 +2,7 @@
 
 This is a **library helper**, not a runnable server component.  It provides
 self-signed certificate auto-generation using the ``cryptography`` library so
-that downstream applications (e.g. flossware-tftpos) building HTTP or other
+that downstream applications (e.g. flossware-tftp-os) building HTTP or other
 TLS-capable surfaces can secure connections out of the box.  tftp-os itself
 does not start a server, bind a port, or manage process lifecycle.
 """

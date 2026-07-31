@@ -35,7 +35,7 @@ Extended modules (shipped but not required for basic usage)::
     tftpos.mnemonics, tftpos.repo_mirror, tftpos.cluster,
     tftpos.console, tftpos.power, tftpos.client.*
 
-App-layer modules (candidates for migration to flossware-tftpos)::
+App-layer modules (candidates for migration to flossware-tftp-os)::
 
     tftpos.webhooks, tftpos.metrics, tftpos.audit
 

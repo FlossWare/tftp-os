@@ -2,7 +2,7 @@
 
 This is a **library helper**, not a runnable server component.  It provides
 API-key storage, hashing, validation, and role hierarchy that downstream
-applications (e.g. flossware-tftpos) can wire into their own HTTP middleware,
+applications (e.g. flossware-tftp-os) can wire into their own HTTP middleware,
 CLI, or other surfaces.  tftp-os itself does not expose routes, middleware,
 or process lifecycle.
 """

@@ -3,7 +3,7 @@
 This is a **library helper**, not a runnable server component.  It provides
 per-key token-bucket rate limiting with configurable limits for different
 endpoint groups (TFTP, API, auth).  Downstream applications
-(e.g. flossware-tftpos) can integrate these limiters into their own HTTP
+(e.g. flossware-tftp-os) can integrate these limiters into their own HTTP
 middleware or CLI surfaces.  tftp-os itself does not expose routes,
 middleware, or process lifecycle.
 

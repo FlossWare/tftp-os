@@ -9,16 +9,16 @@ AI-assisted decisions with full model/API traceability.
 ## 2026-07-29: App repo naming convention
 
 **Issue:** [#18](https://github.com/FlossWare/tftp-os/issues/18)
-**Decision:** App repo will be named `flossware-tftpos` (lowercase-kebab)
+**Decision:** App repo will be named `flossware-tftp-os` (lowercase-kebab)
 **Alternatives considered:** `FlossWare-TftpOS` (PascalCase)
 
 **Models consulted:**
 
 | Model | API | Recommendation |
 |-------|-----|---------------|
-| Llama 3.3 70B | Groq (free) | `flossware-tftpos` |
-| Gemma 4 31B | Cerebras (free) | `flossware-tftpos` |
-| Nemotron 3 Ultra 550B | OpenRouter (free) | `flossware-tftpos` |
+| Llama 3.3 70B | Groq (free) | `flossware-tftp-os` |
+| Gemma 4 31B | Cerebras (free) | `flossware-tftp-os` |
+| Nemotron 3 Ultra 550B | OpenRouter (free) | `flossware-tftp-os` |
 
 **Consensus:** Unanimous
 **Rationale:** `flossware-*` lowercase-kebab is the app repo convention (precedent: `flossware-nexus`).
@@ -30,7 +30,7 @@ AI-assisted decisions with full model/API traceability.
 ## 2026-07-29: Library/app split architecture
 
 **Issue:** [#18](https://github.com/FlossWare/tftp-os/issues/18)
-**Decision:** Split tftp-os into `tftpos` (library, PyPI) + `flossware-tftpos` (6 UI frontends)
+**Decision:** Split tftp-os into `tftpos` (library, PyPI) + `flossware-tftp-os` (6 UI frontends)
 **Pattern:** Mirrors nexus-java / flossware-nexus split
 
 **Frontends planned:**
@@ -118,12 +118,12 @@ AI-assisted decisions with full model/API traceability.
 
 ---
 
-### Downstream app repo name — `flossware-tftpos`
+### Downstream app repo name — `flossware-tftp-os`
 
-**Decision:** Use `flossware-tftpos` consistently (not `flossware-tftp-os`).
+**Decision:** Renamed from `flossware-tftpos` to `flossware-tftp-os` to match the library name `tftp-os`.
 
-**Date:** 2026-07-31
+**Date:** 2026-07-31 (renamed from original `flossware-tftpos`)
 
-**Consensus:** Align with existing GitHub repo name.
+**Consensus:** User decision — consistency with `tftp-os` naming.
 
-**Rationale:** The library is `tftp-os` / PyPI `tftpos`. The app repo follows the PyPI convention: `flossware-tftpos`. Using two names (`flossware-tftpos` and `flossware-tftp-os`) breaks links and confuses contributors.
+**Rationale:** The library repo is `tftp-os`, so the app repo should be `flossware-tftp-os` (not `flossware-tftpos`) for consistency.

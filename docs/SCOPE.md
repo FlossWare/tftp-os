@@ -3,7 +3,7 @@
 This document defines which modules are **core** (essential for any firmware
 path resolution), **extended** (useful but not required for basic usage), and
 which are candidates for eventual migration to downstream projects (PxeOS,
-flossware-tftpos, or VirtOS).
+flossware-tftp-os, or VirtOS).
 
 Decisions were informed by multi-AI consensus (Nemotron-3 Super 120B,
 Nemotron-3 Nano 30B, Cohere North Mini Code) queried via OpenRouter on
@@ -116,14 +116,14 @@ external packages (cryptography, psycopg2, pymysql respectively).
 These modules were classified by the majority of models as belonging in the
 application/frontend layer rather than the library. They remain in-tree for
 now under the `observability` extra but are strong candidates for migration
-to flossware-tftpos (the application layer) or other downstream projects.
+to flossware-tftp-os (the application layer) or other downstream projects.
 
 | Module | Purpose | Consensus | Extra | Migration Target |
 |--------|---------|-----------|-------|-----------------|
-| `webhooks.py` | Webhook event notifications | 3/3 APP-LAYER | `observability` | flossware-tftpos |
-| `metrics.py` | Prometheus metrics export | 3/3 APP-LAYER | `observability` | flossware-tftpos |
-| `audit.py` | Audit trail logging | 3/3 APP-LAYER | `observability` | flossware-tftpos |
-| `observability.py` | Observability utilities (does not yet exist) | 3/3 APP-LAYER | `observability` | flossware-tftpos |
+| `webhooks.py` | Webhook event notifications | 3/3 APP-LAYER | `observability` | flossware-tftp-os |
+| `metrics.py` | Prometheus metrics export | 3/3 APP-LAYER | `observability` | flossware-tftp-os |
+| `audit.py` | Audit trail logging | 3/3 APP-LAYER | `observability` | flossware-tftp-os |
+| `observability.py` | Observability utilities (does not yet exist) | 3/3 APP-LAYER | `observability` | flossware-tftp-os |
 
 ---
 
@@ -136,13 +136,13 @@ projects as the ecosystem matures.
 |--------|-------------|-------------------|--------|
 | `iso_detect.py` | tftpos (extended) | pxe-os | Distro ISO detection is OS-installer logic |
 | `mnemonics.py` | tftpos (extended) | pxe-os | Distro aliases are PxeOS UX |
-| `cloud_init.py` | tftpos (extended) | pxe-os or flossware-tftpos | Cloud-init is a provisioning workflow concern |
-| `cloud_image.py` | tftpos (extended) | pxe-os or flossware-tftpos | Cloud image management is above firmware serving |
-| `cluster.py` | tftpos (extended) | flossware-tftpos | Multi-host orchestration belongs in the app |
-| `client/*` | tftpos (extended) | virtos or flossware-tftpos | VM lifecycle is not firmware path resolution |
-| `console.py` | tftpos (extended) | virtos or flossware-tftpos | Console access is a UI/ops concern |
-| `power.py` | tftpos (extended) | flossware-tftpos | BMC power control is an operational concern |
-| `repo_mirror.py` | tftpos (extended) | flossware-tftpos | Mirror management is a deployment concern |
+| `cloud_init.py` | tftpos (extended) | pxe-os or flossware-tftp-os | Cloud-init is a provisioning workflow concern |
+| `cloud_image.py` | tftpos (extended) | pxe-os or flossware-tftp-os | Cloud image management is above firmware serving |
+| `cluster.py` | tftpos (extended) | flossware-tftp-os | Multi-host orchestration belongs in the app |
+| `client/*` | tftpos (extended) | virtos or flossware-tftp-os | VM lifecycle is not firmware path resolution |
+| `console.py` | tftpos (extended) | virtos or flossware-tftp-os | Console access is a UI/ops concern |
+| `power.py` | tftpos (extended) | flossware-tftp-os | BMC power control is an operational concern |
+| `repo_mirror.py` | tftpos (extended) | flossware-tftp-os | Mirror management is a deployment concern |
 
 ---
 

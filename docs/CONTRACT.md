@@ -135,7 +135,7 @@ These are explicit non-goals. pxe-os or other consumers own them:
 - **No autoinstall templates** -- kickstart, preseed, cloud-init *templates* belong in pxe-os; tftp-os provides raw `CloudInitConfig` generation but not OS-specific installer templates
 - **No DHCP management** -- tftp-os does not configure or manage DHCP servers
 - **No web UI** -- tftp-os is a pure library with no HTTP endpoints or frontend
-- **No REST API** -- FastAPI integration lives in [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos)
+- **No REST API** -- FastAPI integration lives in [flossware-tftp-os](https://github.com/FlossWare/flossware-tftp-os)
 - **No OS-specific installer logic** -- distro-specific boot workflows belong in pxe-os plugins
 
 ## Extension Points
@@ -243,7 +243,7 @@ firmware path resolution.  Their APIs may change without notice between
 
 ### App-layer modules (candidates for migration)
 
-These modules are candidates for migration to **flossware-tftpos** (the
+These modules are candidates for migration to **flossware-tftp-os** (the
 application layer).  They remain in-tree for now but should not be
 considered part of the library's long-term surface.
 
@@ -361,7 +361,7 @@ between 0.y releases.
 
 - `auth`, `tls`, `secrets`, `cache`, `rate_limit`, `named_objects`
 
-### App-layer (will migrate to flossware-tftpos)
+### App-layer (will migrate to flossware-tftp-os)
 
 These modules will move to the application layer and should not be
 depended on for long-term library usage.

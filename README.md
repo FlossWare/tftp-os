@@ -18,7 +18,7 @@ pip install tftpos[mysql]         # + pymysql (MySQL/MariaDB backend)
 pip install tftpos[all]           # all external deps (tls, postgres, mysql)
 ```
 
-tftp-os is a **reusable library** -- it contains no CLI, no REST API routes, and no UI. It is designed as a foundation that anyone can build on. See [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos) for a reference application with desktop, mobile, and web frontends.
+tftp-os is a **reusable library** -- it contains no CLI, no REST API routes, and no UI. It is designed as a foundation that anyone can build on. See [flossware-tftp-os](https://github.com/FlossWare/flossware-tftp-os) for a reference application with desktop, mobile, and web frontends.
 
 tftp-os works on its own for scenarios where you need to serve firmware to devices -- router firmware (OpenWRT, DD-WRT, FreshTomato), embedded systems, IoT devices, or any TFTP-based provisioning workflow.
 
