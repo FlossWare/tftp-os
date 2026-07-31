@@ -115,3 +115,15 @@ AI-assisted decisions with full model/API traceability.
 
 **Consensus:** 3/3 unanimous for Option A
 **Rationale:** The project name is "tftp-os" — without staging, the library only returns a path string and doesn't deliver on its TFTP promise. Staging is the product path: resolve → stage → external TFTP daemon serves. Promoted to core in `__all__`, CONTRACT.md, and SCOPE.md.
+
+---
+
+### Downstream app repo name — `flossware-tftpos`
+
+**Decision:** Use `flossware-tftpos` consistently (not `flossware-tftp-os`).
+
+**Date:** 2026-07-31
+
+**Consensus:** Align with existing GitHub repo name.
+
+**Rationale:** The library is `tftp-os` / PyPI `tftpos`. The app repo follows the PyPI convention: `flossware-tftpos`. Using two names (`flossware-tftpos` and `flossware-tftp-os`) breaks links and confuses contributors.

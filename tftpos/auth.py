@@ -1,4 +1,11 @@
-"""API key authentication and role-based access control."""
+"""API key authentication and role-based access control.
+
+This is a **library helper**, not a runnable server component.  It provides
+API-key storage, hashing, validation, and role hierarchy that downstream
+applications (e.g. flossware-tftpos) can wire into their own HTTP middleware,
+CLI, or other surfaces.  tftp-os itself does not expose routes, middleware,
+or process lifecycle.
+"""
 
 from __future__ import annotations
 

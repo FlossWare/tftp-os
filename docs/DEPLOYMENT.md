@@ -405,3 +405,9 @@ mobile frontends, see
 [flossware-tftpos](https://github.com/FlossWare/flossware-tftpos). That
 repository includes systemd service configuration, reverse proxy setup, and
 full application deployment instructions.
+
+---
+
+## See Also
+
+- [docs/HARDWARE_LAB.md](HARDWARE_LAB.md) -- hardware/system-lab checklist for real-device testing with system tftpd

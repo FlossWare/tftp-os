@@ -113,6 +113,14 @@ class PluginRegistry:
                         and attr is not FirmwarePlugin
                         and not inspect.isabstract(attr)
                     ):
-                        self.register(attr)
+                        try:
+                            self.register(attr)
+                        except TypeError:
+                            logger.info(
+                                "Plugin %r requires config; "
+                                "register manually with kwargs",
+                                attr_name,
+                            )
+                            self._discovered[attr_name.lower()] = attr
             except ImportError:
                 pass

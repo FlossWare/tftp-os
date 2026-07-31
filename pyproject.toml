@@ -82,6 +82,7 @@ dev = [
 # their own pyproject.toml entry-points.
 [project.entry-points."tftpos.plugins"]
 static = "tftpos.plugins.static:StaticFirmwarePlugin"
+openwrt = "tftpos.plugins.openwrt:OpenWrtPlugin"
 
 [project.urls]
 Homepage = "https://github.com/FlossWare/tftp-os"

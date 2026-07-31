@@ -118,6 +118,55 @@ class TestLoadBuiltins:
         registry.load_builtins()
         assert len(registry.available) == 0
 
+    def test_load_builtins_skips_config_required_plugins(self):
+        """load_builtins gracefully skips plugins that require config kwargs."""
+        registry = PluginRegistry()
+        registry.load_builtins(["tftpos.plugins.static"])
+        # StaticFirmwarePlugin requires config, should not crash
+        assert registry.available == []
+        # But should be discoverable
+        assert "staticfirmwareplugin" in registry.discovered
+
+    def test_load_builtins_logs_info_for_config_required(self):
+        """load_builtins logs info when a plugin requires constructor args."""
+        registry = PluginRegistry()
+        with patch("tftpos.registry.logger") as mock_logger:
+            registry.load_builtins(["tftpos.plugins.static"])
+        mock_logger.info.assert_called()
+        assert "StaticFirmwarePlugin" in str(mock_logger.info.call_args)
+
+    def test_load_builtins_registers_simple_plugins(self):
+        """load_builtins registers plugins that need no constructor args."""
+        # Create a temp module with a simple plugin
+        import types
+        fake_mod = types.ModuleType("fake_builtin_mod")
+
+        class SimplePlugin(FirmwarePlugin):
+            @property
+            def os_family(self) -> str:
+                return "simpleos"
+
+            @property
+            def supported_versions(self) -> list[str]:
+                return ["1.0"]
+
+            def firmware_path(self, profile) -> str:
+                return "/simple/firmware"
+
+        fake_mod.SimplePlugin = SimplePlugin
+        fake_mod.FirmwarePlugin = FirmwarePlugin  # base should be skipped
+
+        registry = PluginRegistry()
+        with patch("tftpos.registry.importlib.import_module", return_value=fake_mod):
+            registry.load_builtins(["fake_builtin_mod"])
+        assert "simpleos" in registry.available
+
+    def test_load_builtins_ignores_import_errors(self):
+        """load_builtins silently skips modules that fail to import."""
+        registry = PluginRegistry()
+        registry.load_builtins(["nonexistent.module.that.does.not.exist"])
+        assert registry.available == []
+
 
 # ---------------------------------------------------------------------------
 # available property

@@ -215,6 +215,7 @@ documented in the changelog and reflected in the version number.
 | `tftpos.validation` | input validation and sanitization helpers |
 | `tftpos.logging_config` | logging setup used by core modules |
 | `tftpos.staging` | `stage`, `unstage`, `list_staged` (tftp_root management) |
+| `tftpos.plugins.static` | `StaticFirmwarePlugin` (built-in plugin for simple firmware layouts) |
 
 ### Extended modules (shipped, not part of the stable surface)
 
@@ -239,7 +240,6 @@ firmware path resolution.  Their APIs may change without notice between
 | `tftpos.console` | Serial/VNC/SPICE console proxy |
 | `tftpos.power` | BMC/IPMI/Redfish power control |
 | `tftpos.client.*` | Hypervisor backends (libvirt, bhyve, Hyper-V, VMM) |
-| `tftpos.plugins.static` | Built-in `StaticFirmwarePlugin` for simple firmware layouts |
 
 ### App-layer modules (candidates for migration)
 
@@ -261,6 +261,41 @@ considered part of the library's long-term surface.
 - **1.0+:** The public API modules listed above become stable.  Breaking
   changes require a major version bump (semver).
 
+## Configuration Evolution
+
+### During 0.x (current)
+
+Configuration may change between minor versions. Breaking changes are
+documented in CHANGELOG.md and the release notes.
+
+### Rules (effective now)
+
+1. **New keys get defaults.** Adding a config key never breaks existing
+   config files — omitted keys use sensible defaults.
+2. **Removed keys are warned, not errored.** When a key is removed,
+   `load_config()` logs a deprecation warning for at least one minor
+   version before erroring.
+3. **Type changes are breaking.** Changing a key's expected type
+   (e.g. string → list) is a breaking change and requires a minor
+   version bump with migration guidance.
+4. **Profile schema is plugin-owned.** Profile TOML files are validated
+   by `FirmwarePlugin.validate_profile()`, not by the core library.
+   Plugins own their profile fields.
+
+### Post-1.0 (future)
+
+After 1.0, configuration will follow semver:
+- Patch: no config changes
+- Minor: additive only (new keys with defaults)
+- Major: breaking changes with migration guide
+
+### Validation
+
+`load_config()` raises `ConfigError` for invalid configuration.
+Unknown keys are ignored (forward-compatible). Missing required keys
+raise `ConfigError` with a suggestion.
+
+
 ## How pxe-os Composes tftp-os
 
 pxe-os is expected to:
@@ -271,3 +306,72 @@ pxe-os is expected to:
 4. Use `ProvisionTracker` to monitor and drive provisioning state
 5. Register callbacks via `tracker.on_state_change()` for workflow automation
 6. Extend `FirmwarePlugin` for each supported OS family
+
+## App Bootstrap
+
+The supported path from configuration to serving firmware:
+
+```python
+from tftpos.config import TftpOSConfig, load_config, load_hosts
+from tftpos.engine import FirmwareEngine
+from tftpos.matcher import HostMatcher
+from tftpos.plugins.static import StaticFirmwarePlugin
+from tftpos.registry import PluginRegistry
+
+config = load_config("tftpos.toml")
+rules = load_hosts("hosts.toml")
+
+registry = PluginRegistry()
+registry.register(
+    StaticFirmwarePlugin,
+    distro_root="/srv/tftpos/distros",
+    os_family="openwrt",
+    supported_versions=["23.05"],
+)
+
+matcher = HostMatcher(rules)
+engine = FirmwareEngine(registry, matcher, config)
+
+# Resolve and stage
+path = engine.serve(mac="aa:bb:cc:dd:ee:ff")
+staged = engine.stage(mac="aa:bb:cc:dd:ee:ff")
+```
+
+Note: `PluginRegistry.discover()` catalogs entry-point classes but cannot
+auto-instantiate plugins that require configuration arguments.  The
+application must call `registry.register(cls, **kwargs)` to provide
+the necessary parameters (e.g. `distro_root`, `os_family`,
+`supported_versions`).
+
+## Recommended Imports for App v1
+
+### Stable (safe to depend on)
+
+These modules form the stable surface for app v1.  Breaking changes will
+be documented and versioned.
+
+- `config`, `engine`, `matcher`, `registry`, `models`, `state`, `errors`,
+  `db`, `validation`, `logging_config`, `staging`, `plugins.base`,
+  `plugins.static`
+
+### Extended (may change)
+
+These modules ship with tftp-os but their APIs may change without notice
+between 0.y releases.
+
+- `auth`, `tls`, `secrets`, `cache`, `rate_limit`, `named_objects`
+
+### App-layer (will migrate to flossware-tftpos)
+
+These modules will move to the application layer and should not be
+depended on for long-term library usage.
+
+- `webhooks`, `metrics`, `audit`
+
+### Do NOT depend on for v1
+
+These modules are candidates for migration to downstream projects or are
+not yet stable enough for app v1 consumers.
+
+- `power`, `console`, `cluster`, `client.*`, `cloud_init`, `cloud_image`,
+  `repo_mirror`, `mnemonics`, `iso_detect`

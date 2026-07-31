@@ -935,7 +935,7 @@ engine = ProvisioningEngine(registry, matcher, config)
 
 ## Known Limitations
 
-- **No production deployment yet** -- use the `tftpos.staging` module (`stage()`, `unstage()`, `list_staged()`) or `engine.stage()` to place resolved firmware under `tftp_root` for an external TFTP daemon; lab proof in `test_lab_tftp.py` demonstrates the full loop via tftpy
+- **No production deployment yet** -- use the `tftpos.staging` module (`stage()`, `unstage()`, `list_staged()`) or `engine.stage()` to place resolved firmware under `tftp_root` for an external TFTP daemon; lab-proven via tftpy (see [docs/HARDWARE_LAB.md](docs/HARDWARE_LAB.md)); system tftpd + real device test pending
 - **No REST API implementation** -- this is intentional; tftp-os is a pure library with no API routes
 - **Plugin ecosystem** -- tftp-os ships `StaticFirmwarePlugin` for simple `{distro_root}/{os_family}/{os_version}/firmware.bin` layouts; for more complex needs, write your own or use PxeOS's OS plugins (see [docs/PLUGIN_GUIDE.md](docs/PLUGIN_GUIDE.md))
 - **IPMI/Redfish** -- Power control shells out to `ipmitool` and makes HTTP requests to Redfish endpoints; not tested against real BMCs

@@ -43,6 +43,7 @@ tests/
   test_named_objects.py   - NamedObjectStore CRUD
   test_observability.py   - Metrics rendering, cache stats
   test_performance.py     - Latency and throughput tests
+  test_openwrt_plugin.py  - OpenWrtPlugin target directory layout, security
   test_plugin_static.py   - StaticFirmwarePlugin path resolution, security
   test_power.py           - IPMI/Redfish drivers, PowerManager
   test_rate_limit.py      - Token bucket, middleware, endpoint groups
@@ -56,7 +57,7 @@ tests/
   test_webhooks.py        - WebhookManager, HMAC signatures
 ```
 
-27 test files, 1038 tests total (1029 unit + 6 registry + 3 lab-tftp integration).
+28 test files, 1061 tests total (1052 unit + 6 registry + 3 lab-tftp integration).
 
 ## Coverage
 

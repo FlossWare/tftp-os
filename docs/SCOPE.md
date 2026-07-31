@@ -46,6 +46,7 @@ address to a firmware path, manage plugins, and track provisioning state.
 | `validation.py` | Input validation and sanitization |
 | `logging_config.py` | Logging setup (used by core modules) |
 | `staging.py` | TFTP root staging (stage/unstage/list_staged) |
+| `plugins/static.py` | Built-in `StaticFirmwarePlugin` |
 
 **Rationale:** All three models agreed that errors.py and validation.py are
 core. The remaining modules in this list (engine, matcher, registry, config,
@@ -68,6 +69,14 @@ external packages (cryptography, psycopg2, pymysql respectively).
 
 ### Infrastructure and Security
 
+> **Note:** The modules in this section (`auth.py`, `tls.py`, `secrets.py`,
+> `rate_limit.py`, etc.) are **optional library helpers**, not runnable server
+> components.  They provide building blocks (key storage, certificate
+> generation, token-bucket limiters) that downstream applications building
+> HTTP/CLI surfaces on top of tftp-os can integrate.  The library itself does
+> NOT provide routes, middleware, or process lifecycle.
+
+
 | Module | Purpose | Consensus | Extra |
 |--------|---------|-----------|-------|
 | `auth.py` | Authentication and RBAC | 2/3 EXTENDED, 1/3 CORE | always installed |
@@ -89,7 +98,6 @@ external packages (cryptography, psycopg2, pymysql respectively).
 | `cluster.py` | Multi-host ordered provisioning | 3/3 EXTENDED | `cluster` |
 | `console.py` | Serial/VNC/SPICE console proxy | 3/3 EXTENDED | `observability` |
 | `power.py` | BMC/IPMI/Redfish power control | 3/3 EXTENDED | `power` |
-| `plugins/static.py` | Built-in `StaticFirmwarePlugin` | -- | always installed |
 
 ### Hypervisor Backends (`hypervisor` extra)
 

@@ -1,9 +1,10 @@
-"""TLS certificate generation and management for TftpOS.
+"""TLS certificate generation and management helpers for tftp-os.
 
-Provides self-signed certificate auto-generation using the
-``cryptography`` library so that autoinstall configs (which may
-contain password hashes and SSH keys) are served over HTTPS by
-default.
+This is a **library helper**, not a runnable server component.  It provides
+self-signed certificate auto-generation using the ``cryptography`` library so
+that downstream applications (e.g. flossware-tftpos) building HTTP or other
+TLS-capable surfaces can secure connections out of the box.  tftp-os itself
+does not start a server, bind a port, or manage process lifecycle.
 """
 
 from __future__ import annotations

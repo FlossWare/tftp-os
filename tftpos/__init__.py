@@ -14,6 +14,7 @@ Core modules (always required for firmware path resolution)::
     tftpos.matcher      -- HostMatcher
     tftpos.registry     -- PluginRegistry
     tftpos.plugins.base -- FirmwarePlugin (abstract base class)
+    tftpos.plugins.static -- StaticFirmwarePlugin (built-in plugin)
     tftpos.models       -- HostRule, ProvisionProfile, BootFirmware,
                            DistroAssets, CloudImage
     tftpos.state        -- ProvisionTracker, ProvisionState, ProvisionRecord
@@ -27,7 +28,7 @@ Core modules (always required for firmware path resolution)::
 
 Extended modules (shipped but not required for basic usage)::
 
-    tftpos.plugins.static, tftpos.auth,
+    tftpos.auth,
     tftpos.tls, tftpos.secrets, tftpos.cache,
     tftpos.rate_limit, tftpos.named_objects,
     tftpos.cloud_init, tftpos.cloud_image, tftpos.iso_detect,
