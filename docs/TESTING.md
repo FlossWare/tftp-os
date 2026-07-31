@@ -10,7 +10,7 @@ pytest
 pytest --no-cov
 
 # Specific test file
-pytest tests/test_engine.py
+pytest tests/test_registry.py
 
 # Specific test class or method
 pytest tests/test_auth.py::TestApiKeyStore::test_create_key
@@ -42,18 +42,20 @@ tests/
   test_named_objects.py   - NamedObjectStore CRUD
   test_observability.py   - Metrics rendering, cache stats
   test_performance.py     - Latency and throughput tests
+  test_plugin_static.py   - StaticFirmwarePlugin path resolution, security
   test_power.py           - IPMI/Redfish drivers, PowerManager
   test_rate_limit.py      - Token bucket, middleware, endpoint groups
   test_registry.py        - PluginRegistry discovery and registration
   test_repo_mirror.py     - RepoManager, sync operations
   test_secrets.py         - SecretsProvider, secret resolution
+  test_staging.py         - TFTP root staging, atomic ops, security
+  test_lab_tftp.py        - Lab proof: MAC -> stage -> TFTP transfer -> checksum (integration, 3 tests)
   test_tls.py             - Certificate generation
-  test_virtos_integration.py - VirtOS/hypervisor integration
   test_vm_client.py       - VirtBackend implementations
   test_webhooks.py        - WebhookManager, HMAC signatures
 ```
 
-24 test files, 965 tests total (950 unit + 15 integration).
+26 test files, 1017 tests total (1008 unit + 6 registry + 3 lab-tftp integration).
 
 ## Coverage
 
@@ -173,7 +175,7 @@ bandit -r tftpos/ -ll
 
 ## What Is NOT Tested
 
-- No integration tests against real TFTP servers
+- ~~No integration tests against real TFTP servers~~ (added: `test_lab_tftp.py` uses tftpy for user-mode TFTP)
 - No integration tests against real IPMI/Redfish BMCs
 - No integration tests against real hypervisors (libvirt, bhyve, vmm, Hyper-V)
 - No end-to-end tests serving firmware to actual devices

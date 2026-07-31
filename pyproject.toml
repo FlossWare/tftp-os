@@ -54,6 +54,7 @@ hypervisor = []   # client/libvirt_backend, bhyve_backend, hyperv_backend, vmm_b
 cloud = []        # cloud_init.py, cloud_image.py
 cluster = []      # cluster.py, repo_mirror.py
 observability = []  # metrics.py, audit.py, webhooks.py, console.py
+test-tftp = ["tftpy>=0.8"]
 # Convenience: install all extended modules at once.
 all = [
     "tftpos[tls]",
@@ -77,8 +78,8 @@ dev = [
     "bandit>=1.7.5,<2.0",
 ]
 
-# Plugin namespace: intentionally empty. Third-party packages register plugins
-# here via their own pyproject.toml entry-points.
+# Plugin namespace. Third-party packages can also register plugins here via
+# their own pyproject.toml entry-points.
 [project.entry-points."tftpos.plugins"]
 static = "tftpos.plugins.static:StaticFirmwarePlugin"
 
